@@ -22,8 +22,16 @@ if __name__ == '__main__':
 
 
 	interest_df.columns = newcolumnnames
-	interest_df.set_index('date', inplace = True)
+
+	interest_df['date'] = pd.to_datetime(interest_df['date'])
+
+	for name in newcolumnnames:
+		if name != 'date':
+			interest_df[name] = pd.to_numeric(interest_df[name], errors='coerce')
+
 	interest_df.to_csv("cleaned_data.csv")
 
+
 	print interest_df.head()
+	print interest_df.dtypes
 
