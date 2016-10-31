@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import datetime
+from dateutil.relativedelta import relativedelta
 
 """
 portfolio_df structure:
@@ -22,22 +23,37 @@ interestrate: annual interest rate, 5% = .05, float
 maturitydate: date of maturity, datetime64
 coupondates: dates of coupon payments, if zero coupon simply the maturity date, list of datetime64
 couponpayments: payment amounts for coupon dates list of dollar amounts
+
+some other notes:
+currenttime is expressed as years stored as floats when being used by position_value,
+but it is considered a number of days when being used by mc_duration
 """
 
 	
-def mc_duration(position = None):
+def mc_duration(position = None, currenttime = None):
 	"""
 	Macaulay Duration of a position
 	"""
 
+	# get dates and payments this is moot for zero coupon bonds.
 	dates = position["coupondates"]
 	payments = position["couponpayments"]
 
-	############### TODO ################
+	# make the t_j - t_0 terms
+	offsetdates = dates - currenttime
 
+	# get it out of timedelta datatypes, note this is terms of days
+	offsetdatesunitless = np.array((offsetdates/ np.timedelta64(1, 'D')) / 365 )
 
+	# do the same things with the dates. also they are in terms of days.
+	datesunitless = np.array(((dates - position["createdate"]) / np.timedelta64(1, 'D')) / 365)
 
-	return None
+	# note things are not happy when we are doing this days and years do not have the same base unit, this assume we are not in a leap year
+	Pjslist = [position_value(position = position, currenttime = b) for (a,b) in np.ndenumerate(offsetdatesunitless)]
+
+	macdur = np.sum(Pjslist * offsetdatesunitless) / np.sum(Pjslist * datesunitless)
+
+	return macdur
 
 def asset_procceds(portfolio = None):
 	"""
@@ -59,7 +75,7 @@ def liability_outgo(portfolio = None):
 
 def position_value(position = None, currenttime = None):
 	"""
-	calculate the value of a position, can accept long and short positions,
+	calculate the value of a position, can accept long and short positions.
 	"""
 
 	############### TODO ################
@@ -72,12 +88,15 @@ def position_value(position = None, currenttime = None):
 		"""
 		based on derriavitives market book page 209 equation 7.4
 		"""
-		# do something
+		effrate, timeperiod = effective_rate(position = position)
+		t0price = Pnull(position = position, n = currenttime)
+		t1price = Pnull(position = position, n = timeperiod)
+		posvalue = t1price / t0price
 
 	else:
 		print "bad positiontype"
 
-	return None
+	return posvalue
 
 def Pnull(position = None, n = None):
 	"""
