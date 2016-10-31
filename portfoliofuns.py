@@ -53,12 +53,28 @@ def mc_duration(position = None, currenttime = None):
 
 	macdur = np.sum(Pjslist * offsetdatesunitless) / np.sum(Pjslist * datesunitless)
 
-	effectiverate, timeperiod = effective_rate(position = position)
+
+	# grab time period for scaling duration
+	timeperiod = timeper(position = position)
 
 	# change the unit of macdur to the time period of the bond.
 	macdur = macdur * timeperiod
 
 	return macdur
+
+
+def mod_duration(position = None, currenttime = None):
+
+	macdur = mc_duration(position = position, currenttime = currenttime)
+	effrate = effective_rate(position = position)
+
+	moddur = macdur / (((effrate - 1)/position["coupondates"].size) + 1)
+
+
+	return moddur
+
+
+
 
 def asset_procceds(portfolio = None):
 	"""
@@ -92,9 +108,13 @@ def position_value(position = None, currenttime = None):
 		"""
 		based on derriavitives market book page 209 equation 7.4
 		"""
-		effrate, timeperiod = effective_rate(position = position)
+		# get effective rate and time period
+		effrate = effective_rate(position = position)
+		timeperiod = timeper(position = position)
+
 		t0price = Pnull(position = position, n = currenttime)
 		t1price = Pnull(position = position, n = timeperiod)
+
 		posvalue = t1price / t0price
 
 	else:
@@ -108,13 +128,17 @@ def Pnull(position = None, n = None):
 	gives P(0,n) as defined by derivatives market page 208 equation 7.1
 	"""
 
-	effrate, timeperiod = effective_rate(position)
 
-	P = 1.0 / ((1 + effrate) ** n)
+	effrate = effective_rate(position)
+
+	# note eff rate already has 1 added to it.
+	P = 1.0 / ((effrate) ** n)
 
 	return P
 
-def effective_rate(position = None):
+
+
+def timeper(position = None):
 	"""
 	return effective rate and time period of bond, given a bondtype and interestrate as defined above.
 	"""
@@ -125,19 +149,30 @@ def effective_rate(position = None):
 
 		months = int(str.split(bondtype, "-")[0])
 		devisor = 12/ months
-		effectiverate = interestrate/devisor
 
 		# time period is the length of time used in other functionss
 		timeperiod = float(months) / 12
-	
+		
 	elif "year" in bondtype:
 
 		years = int(str.split(bondtype, "-")[0])
-		effectiverate = (1 + interestrate)**years
 
 		timeperiod = years
 
 
 
-	return effectiverate, timeperiod
+	return timeperiod
+
+def effective_rate(position = None):
+	"""
+	effective rate for a bond, this also might be YTM
+	"""
+
+	# get interest rate and time period of possition
+	interestrate = position["interestrate"]
+	timeperiod = timeper(position)
+
+	effectiverate = (1 + interestrate)**timeperiod
+
+	return effectiverate
 									
