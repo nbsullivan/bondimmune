@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
 
 	# testing out mc_duration calculation.
-	mcdur = portfoliofuns.mc_duration(position = position, currenttime = np.datetime64(date.today()) + 10)
+	mcdur = portfoliofuns.mc_duration(position = position, currenttime = np.datetime64(date.today()))
 
 	print "maculay duration."
 	print mcdur

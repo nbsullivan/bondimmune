@@ -53,6 +53,11 @@ def mc_duration(position = None, currenttime = None):
 
 	macdur = np.sum(Pjslist * offsetdatesunitless) / np.sum(Pjslist * datesunitless)
 
+	effectiverate, timeperiod = effective_rate(position = position)
+
+	# change the unit of macdur to the time period of the bond.
+	macdur = macdur * timeperiod
+
 	return macdur
 
 def asset_procceds(portfolio = None):
