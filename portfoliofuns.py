@@ -25,14 +25,14 @@ coupondates: dates of coupon payments, if zero coupon simply the maturity date, 
 couponpayments: payment amounts for coupon dates list of dollar amounts
 
 some other notes:
-currenttime is expressed as years stored as floats when being used by position_value,
-but it is considered a number of days when being used by mc_duration
+in position_value currenttime is a float representing number of years?
+in mc_duration currenttime is a datetime64 object.
 """
 
 	
 def mc_duration(position = None, currenttime = None):
 	"""
-	Macaulay Duration of a position
+	Macaulay Duration of a position, returns the durantion as a number of years (float).
 	"""
 
 	# get dates and payments this is moot for zero coupon bonds.
@@ -81,9 +81,8 @@ def liability_outgo(portfolio = None):
 def position_value(position = None, currenttime = None):
 	"""
 	calculate the value of a position, can accept long and short positions.
+	returns position value based on derivates market book
 	"""
-
-	############### TODO ################
 
 	if position["positiontype"] == 'short':
 		pass
@@ -100,6 +99,7 @@ def position_value(position = None, currenttime = None):
 
 	else:
 		print "bad positiontype"
+		return None
 
 	return posvalue
 
@@ -107,6 +107,7 @@ def Pnull(position = None, n = None):
 	"""
 	gives P(0,n) as defined by derivatives market page 208 equation 7.1
 	"""
+
 	effrate, timeperiod = effective_rate(position)
 
 	P = 1.0 / ((1 + effrate) ** n)
@@ -115,7 +116,7 @@ def Pnull(position = None, n = None):
 
 def effective_rate(position = None):
 	"""
-	return effective rate given a bondtype and interestrate as defined above.
+	return effective rate and time period of bond, given a bondtype and interestrate as defined above.
 	"""
 	bondtype = position["bondtype"]
 	interestrate = position["interestrate"]
