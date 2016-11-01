@@ -12,11 +12,11 @@ if __name__ == '__main__':
 	# basic long position for a 1-month bond	
 	position = { "weight": 1,
 				 "positiontype": "long",
-				 "bondtype" : "1-year",
+				 "bondtype" : "3-month",
 				 "interestrate" : .05,
 				 "createdate" : np.datetime64(date.today()),
-				 "maturitydate" : np.datetime64(date.today() + relativedelta(years=1)),
-				 "coupondates" : np.array(np.datetime64(date.today() + relativedelta(years=1))),
+				 "maturitydate" : np.datetime64(date.today() + relativedelta(months=3)),
+				 "coupondates" : np.array(np.datetime64(date.today() + relativedelta(months=3))),
 				 "couponpayments" : np.array(1.05) }
 
 	
@@ -32,9 +32,9 @@ if __name__ == '__main__':
 	print "Pnull value"
 	print P
 
-	Positionvalue = portfoliofuns.position_value(position = position, currenttime = 0)
+	Positionvalue = portfoliofuns.position_value(position = position, currenttime = 1./12)
 
-	print "position value at time zero (day bond was purchased.)"
+	print "position value at 1 month bond after."
 	print Positionvalue
 
 
