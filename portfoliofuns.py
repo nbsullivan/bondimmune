@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import datetime
+from datetime import date
 from dateutil.relativedelta import relativedelta
 
 """
@@ -39,6 +40,13 @@ def mc_duration(position = None, currenttime = None):
 	dates = position["coupondates"]
 	payments = position["couponpayments"]
 
+
+
+	# handle default case for current time
+	if currenttime == None:
+		currenttime = np.datetime64(date.today())
+
+
 	# make the t_j - t_0 terms
 	offsetdates = dates - currenttime
 
@@ -46,16 +54,16 @@ def mc_duration(position = None, currenttime = None):
 	offsetdatesunitless = np.array((offsetdates/ np.timedelta64(1, 'D')) / 365 )
 
 	# do the same things with the dates. also they are in terms of days.
-	datesunitless = np.array(((dates - position["createdate"]) / np.timedelta64(1, 'D')) / 365)
+	datesunitless = (dates - np.datetime64(position["createdate"]).astype('M8[D]')) / np.timedelta64(1, 'D') / 365
 
 	# note things are not happy when we are doing this days and years do not have the same base unit, this assume we are not in a leap year
-	Pjslist = [position_value(position = position, currenttime = b) for (a,b) in np.ndenumerate(offsetdatesunitless)]
+	Pjslist = np.array([position_value(position = position, currenttime = b) for (a,b) in np.ndenumerate(offsetdatesunitless)])
 
 	macdur = np.sum(Pjslist * offsetdatesunitless) / np.sum(Pjslist * datesunitless)
 
-
 	# grab time period for scaling duration
 	timeperiod = timeper(position = position)
+
 
 	# change the unit of macdur to the time period of the bond.
 	macdur = macdur * timeperiod
@@ -175,4 +183,46 @@ def effective_rate(position = None):
 	effectiverate = (1 + interestrate)**timeperiod
 
 	return effectiverate
+
+
+def portfolio_duration(portfolio = None, Durationtype = 'mc', currenttime = None):
+	"""
+	has not been tested yet.
+	"""
+
+	portfolio_list = portfolio.to_dict('records')
+
+	# holder for duration value
+
+	for position in portfolio_list:
+
+		# calculate duration based on desirsed type
+		if Durationtype == 'mc':
+		
+			# macaulay duration
+			position["duration"] = mc_duration(position = position, currenttime = currenttime)
+
+		elif Durationtype == 'md':
+
+			# modified duration
+			position['duration'] = mod_duration(position = position, currenttime = currenttime)
+
+		else:
+
+			# if a bad type is entered use mc_dur
+			print "bad duration type entered, using macaulay duration"
+
+			position["duration"] = mc_duration(position = position, currenttime = currenttime)
+
+
+	# reconsistute df.
+	portfolio_dur_df = pd.DataFrame(portfolio_list)
+
+	portduration = np.sum(portfolio_dur_df["duration"] * portfolio_dur_df["weight"])
+
+	return portduration
+
+
+
+
 									
