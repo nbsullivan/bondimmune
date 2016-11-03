@@ -10,14 +10,17 @@ import pandas as pd
 if __name__ == '__main__':
 
 
+
+	
+
 	# basic long position for a 3-month bond at 5%
 	position = { "weight": 1,
 				 "positiontype": "long",
 				 "bondtype" : "3-month",
 				 "interestrate" : .05,
-				 "createdate" : np.datetime64(date.today()),
-				 "maturitydate" : np.datetime64(date.today() + relativedelta(months=3)),
-				 "coupondates" : np.array(np.datetime64(date.today() + relativedelta(months=3))),
+				 "createdate" : portfoliofuns.date_to_day(date.today()),
+				 "maturitydate" : portfoliofuns.date_to_day(date.today() + relativedelta(months=3)),
+				 "coupondates" : np.array(portfoliofuns.date_to_day(date.today() + relativedelta(months=3))),
 				 "couponpayments" : np.array(1.05) }
 
 	
@@ -40,17 +43,17 @@ if __name__ == '__main__':
 
 
 	# testing out mc_duration calculation.
-	mcdur = portfoliofuns.mc_duration(position = position, currenttime = np.datetime64(date.today()))
+	mcdur = portfoliofuns.mc_duration(position = position, currenttime = portfoliofuns.date_to_day())
 
 	print "maculay duration."
 	print mcdur
 
-	moddur = portfoliofuns.mod_duration(position = position, currenttime = np.datetime64(date.today()))
+	moddur = portfoliofuns.mod_duration(position = position, currenttime = portfoliofuns.date_to_day())
 
 	print "modified duration"
 	print moddur
 
-
+	"""
 	# testing portfolio duration function.
 
 	# postion 1 same as above .25 weight
@@ -97,7 +100,8 @@ if __name__ == '__main__':
 
 	print "portfolio duration:"
 	print portdur
+	"""
 
-
+	print portfoliofuns.date_to_day(date(1962, 1, 2))
 
 

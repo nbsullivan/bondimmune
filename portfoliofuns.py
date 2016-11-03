@@ -40,26 +40,38 @@ def mc_duration(position = None, currenttime = None):
 	dates = position["coupondates"]
 	payments = position["couponpayments"]
 
+	print "dates"
+	print dates
+	print "payments"
+	print payments
+
 
 
 	# handle default case for current time
 	if currenttime == None:
-		currenttime = np.datetime64(date.today())
+		currenttime = date_to_day()
 
+	print "currenttime"
+	print currenttime
 
 	# make the t_j - t_0 terms
-	offsetdates = dates - currenttime
+	offsetdates = float(dates - currenttime) / 365
 
-	# get it out of timedelta datatypes, note this is terms of days
-	offsetdatesunitless = np.array((offsetdates/ np.timedelta64(1, 'D')) / 365 )
 
 	# do the same things with the dates. also they are in terms of days.
-	datesunitless = (dates - np.datetime64(position["createdate"]).astype('M8[D]')) / np.timedelta64(1, 'D') / 365
+	datesunitless = float(dates - position["createdate"]) / 365
 
 	# note things are not happy when we are doing this days and years do not have the same base unit, this assume we are not in a leap year
-	Pjslist = np.array([position_value(position = position, currenttime = b) for (a,b) in np.ndenumerate(offsetdatesunitless)])
+	Pjslist = np.array([position_value(position = position, currenttime = b) for (a,b) in np.ndenumerate(offsetdates)])
 
-	macdur = np.sum(Pjslist * offsetdatesunitless) / np.sum(Pjslist * datesunitless)
+	macdur = np.sum(Pjslist * offsetdates) / np.sum(Pjslist * datesunitless)
+
+	print "pjs list"
+	print Pjslist
+	print "offsetdates"
+	print offsetdates
+	print "datesunitless"
+	print datesunitless
 
 	# grab time period for scaling duration
 	timeperiod = timeper(position = position)
@@ -221,6 +233,31 @@ def portfolio_duration(portfolio = None, Durationtype = 'mc', currenttime = None
 	portduration = np.sum(portfolio_dur_df["duration"] * portfolio_dur_df["weight"])
 
 	return portduration
+
+
+def date_to_day(datetimeobj = None):
+	"""
+	Converts dates into integers, day 0: 1962-01-02
+	"""
+
+	# epoch: start of fed reserve dataset
+	epoch = date(1962, 1, 2)
+
+	# make sure a date is actaully passed, if none is passed return the value of today
+	if datetimeobj == None:
+
+		datetimeobj = date.today()
+
+	delta = datetimeobj - epoch
+	days = delta.days
+	return days
+
+
+
+
+
+
+
 
 
 
