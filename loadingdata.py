@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 if __name__ == '__main__':
 	
@@ -25,11 +26,20 @@ if __name__ == '__main__':
 
 	interest_df['date'] = pd.to_datetime(interest_df['date'])
 
+	interest_df.set_index('date', inplace = True)
+
 	for name in newcolumnnames:
 		if name != 'date':
 			interest_df[name] = pd.to_numeric(interest_df[name], errors='coerce')
 
 	interest_df.to_csv("cleaned_data.csv")
+
+	print interest_df.index
+
+	delta = np.datetime64('2005-02-25') - np.datetime64('2005-02-24')
+	print "time delta information"
+	print type(delta)
+	print delta
 
 
 	print interest_df.head()

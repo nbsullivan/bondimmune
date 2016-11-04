@@ -14,14 +14,17 @@ if __name__ == '__main__':
 	
 
 	# basic long position for a 3-month bond at 5%
-	position = { "weight": 1,
+	position = { "weight": 100,
 				 "positiontype": "long",
 				 "bondtype" : "3-month",
 				 "interestrate" : .05,
 				 "createdate" : portfoliofuns.date_to_day(date.today()),
 				 "maturitydate" : portfoliofuns.date_to_day(date.today() + relativedelta(months=3)),
-				 "coupondates" : np.array(portfoliofuns.date_to_day(date.today() + relativedelta(months=3))),
-				 "couponpayments" : np.array(1.05) }
+				 "coupondates" : np.array([portfoliofuns.date_to_day(date.today() + relativedelta(months=1)),
+				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=2)),
+				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=3)), 
+				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=3))]),
+				 "couponpayments" : np.array([10, 10, 10, 100]) }
 
 	
 
@@ -31,16 +34,16 @@ if __name__ == '__main__':
 	print "effective rate"
 	print effrate
 
-	P = portfoliofuns.Pnull(position = position, n = 1)
+	P = portfoliofuns.Pnull(position = position, n = 0)
 	print "Pnull value"
 	print P
 
-	Positionvalue = portfoliofuns.position_value(position = position, currenttime = 1./12)
+	"""
+	Positionvalue = portfoliofuns.position_value(position = position, currenttime = 2./12)
 
 	# finding value of bond after 1 month
 	print "position value at 1 month bond after."
 	print Positionvalue
-
 
 	# testing out mc_duration calculation.
 	mcdur = portfoliofuns.mc_duration(position = position, currenttime = portfoliofuns.date_to_day())
@@ -53,7 +56,7 @@ if __name__ == '__main__':
 	print "modified duration"
 	print moddur
 
-	"""
+
 	# testing portfolio duration function.
 
 	# postion 1 same as above .25 weight
@@ -101,7 +104,5 @@ if __name__ == '__main__':
 	print "portfolio duration:"
 	print portdur
 	"""
-
-	print portfoliofuns.date_to_day(date(1962, 1, 2))
 
 
