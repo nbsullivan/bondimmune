@@ -40,13 +40,6 @@ def mc_duration(position = None, currenttime = None):
 	dates = position["coupondates"]
 	payments = position["couponpayments"]
 
-	print "dates"
-	print dates
-	print "payments"
-	print payments
-
-
-
 	# handle default case for current time
 	if currenttime == None:
 		currenttime = date_to_day()
@@ -55,23 +48,16 @@ def mc_duration(position = None, currenttime = None):
 	print currenttime
 
 	# make the t_j - t_0 terms
-	offsetdates = float(dates - currenttime) / 365
+	offsetdates = (dates - currenttime) / 365
 
 
 	# do the same things with the dates. also they are in terms of days.
-	datesunitless = float(dates - position["createdate"]) / 365
+	datesunitless = (dates - position["createdate"]) / 365
 
 	# note things are not happy when we are doing this days and years do not have the same base unit, this assume we are not in a leap year
 	Pjslist = np.array([position_value(position = position, currenttime = b) for (a,b) in np.ndenumerate(offsetdates)])
 
 	macdur = np.sum(Pjslist * offsetdates) / np.sum(Pjslist * datesunitless)
-
-	print "pjs list"
-	print Pjslist
-	print "offsetdates"
-	print offsetdates
-	print "datesunitless"
-	print datesunitless
 
 	# grab time period for scaling duration
 	timeperiod = timeper(position = position)
@@ -135,7 +121,7 @@ def position_value(position = None, currenttime = None):
 		t0price = Pnull(position = position, n = currenttime)
 		t1price = Pnull(position = position, n = timeperiod)
 
-		posvalue = t1price / t0price
+		posvalue = t0price / t1price
 
 	else:
 		print "bad positiontype"
@@ -148,13 +134,18 @@ def Pnull(position = None, n = None):
 	gives P(0,n) as defined by derivatives market page 208 equation 7.1
 	"""
 
-
+	# we are getting effective rate for the time period of the whole bond not yearly
 	effrate = effective_rate(position)
 
-	# note eff rate already has 1 added to it.
-	P = 1.0 / ((effrate) ** n)
+	timeperiod = timeper(position)
 
-	return P
+
+	Pc = position["couponpayments"] 
+	tc = position["coupondates"] - position["createdate"]
+
+	PV = np.sum(Pc/(effrate**tc))
+
+	return PV
 
 
 
@@ -192,7 +183,7 @@ def effective_rate(position = None):
 	interestrate = position["interestrate"]
 	timeperiod = timeper(position)
 
-	effectiverate = (1 + interestrate)**timeperiod
+	effectiverate = (1 + interestrate)**(1./365)
 
 	return effectiverate
 
@@ -251,6 +242,18 @@ def date_to_day(datetimeobj = None):
 	delta = datetimeobj - epoch
 	days = delta.days
 	return days
+
+
+def day_to_date(daynumber = None):
+	"""
+	converts a day number to a datetime.date object
+	"""
+
+	epoch = date(1962, 1, 2)
+
+	if daynumber == None:
+		print "no day given"
+		return None
 
 
 
