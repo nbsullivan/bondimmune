@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import portfoliofuns
 
 if __name__ == '__main__':
 	
@@ -25,8 +26,9 @@ if __name__ == '__main__':
 	interest_df.columns = newcolumnnames
 
 	interest_df['date'] = pd.to_datetime(interest_df['date'])
+	interest_df['daynumber'] = interest_df['date'].map(portfoliofuns.date_to_day)
 
-	interest_df.set_index('date', inplace = True)
+	interest_df.set_index('daynumber', inplace = True)
 
 	for name in newcolumnnames:
 		if name != 'date':
@@ -36,10 +38,6 @@ if __name__ == '__main__':
 
 	print interest_df.index
 
-	delta = np.datetime64('2005-02-25') - np.datetime64('2005-02-24')
-	print "time delta information"
-	print type(delta)
-	print delta
 
 
 	print interest_df.head()

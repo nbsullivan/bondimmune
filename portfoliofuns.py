@@ -237,7 +237,12 @@ def date_to_day(datetimeobj = None):
 
 		datetimeobj = date.today()
 
-	delta = datetimeobj - epoch
+	# one day I will figure out how to deal with datetime objects. today is not that day though
+	try:
+		delta = datetimeobj - epoch
+	except:
+		delta = datetimeobj.to_datetime().date() - epoch
+
 	days = delta.days
 	return days
 
@@ -257,6 +262,23 @@ def day_to_date(daynumber = None):
 	newdate = epoch + datetime.timedelta(days = daynumber)
 
 	return newdate
+
+
+def todays_rates(daynumber = None, interestrate_df = None):
+	"""
+	grabs current days rates from interestrate_df
+	"""
+
+	# if no day number use todays number
+	if daynumber == None:
+		daynumer = date_to_day(date.today())
+
+	# if no interestrate_df use fed dataset
+	if interestrate_df == None:
+		interestrate_df = pd.read_csv("cleaned_data.csv")
+
+
+	# grab the row that the daynumber corosponds to.
 
 
 
