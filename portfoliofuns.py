@@ -49,12 +49,24 @@ def mc_duration(position = None, currenttime = None):
 	print "currenttime"
 	print currenttime
 
+	print "dates"
+	print dates
+
+	print "dates - currenttime"
+	print dates - currenttime
+
 	# make the t_j - t_0 terms
-	offsetdates = (dates - currenttime) / 365
+	offsetdates = (dates - float(currenttime)) / 365
+
+	print "offsetdates"
+	print offsetdates
 
 
 	# do the same things with the dates. also they are in terms of days.
-	datesunitless = (dates - position["createdate"]) / 365
+	datesunitless = (dates - float(position["createdate"])) / 365
+
+	print "datesunitless"
+	print datesunitless
 
 	# note things are not happy when we are doing this days and years do not have the same base unit, this assume we are not in a leap year
 	Pjslist = np.array([position_value(position = position, currenttime = b) for (a,b) in np.ndenumerate(offsetdates)])

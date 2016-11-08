@@ -38,7 +38,6 @@ if __name__ == '__main__':
 	print "Pnull value"
 	print P
 
-	"""
 	Positionvalue = portfoliofuns.position_value(position = position, currenttime = 2./12)
 
 	# finding value of bond after 1 month
@@ -59,6 +58,7 @@ if __name__ == '__main__':
 
 	# testing portfolio duration function.
 
+	"""
 	# postion 1 same as above .25 weight
 	position1 = { "weight": .25,
 			 "positiontype": "long",
