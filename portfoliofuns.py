@@ -5,29 +5,31 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 
 """
-portfolio_df structure:
+	portfolio_list structure:
 
-weight: percentage of portfolio invested in position, float < 1
-positiontype: either "long" or "short", string
-bondtype: 1-month	3-month	6-month	1-year	2-year	3-year	5-year	7-year	10-year	20-year	30-year, string
-interestrate: annual interest rate, 5% = .05, float
-maturitydate: date of maturity, datetime64
-coupondates: dates of coupon payments, if zero coupon simply the maturity date, list of datetime64
-couponpayments: payment amounts for coupon dates list of dollar amounts
+	A list of position dictionary
 
-position dictionary strcture: (same as a row in the portfolio dataframe)
 
-weight: percentage of portfolio invested in position, float
-positiontype: either "long" or "short", string
-bondtype: 1-month	3-month	6-month	1-year	2-year	3-year	5-year	7-year	10-year	20-year	30-year, string
-interestrate: annual interest rate, 5% = .05, float
-maturitydate: date of maturity, datetime64
-coupondates: dates of coupon payments, if zero coupon simply the maturity date, list of datetime64
-couponpayments: payment amounts for coupon dates list of dollar amounts
+	position dictionary strcture: (same as a row in the portfolio dataframe)
+
+	position = { "weight": 100,
+				 "positiontype": "long",
+				 "bondtype" : "3-month",
+				 "interestrate" : .05,
+				 "createdate" : portfoliofuns.date_to_day(date.today()),
+				 "maturitydate" : portfoliofuns.date_to_day(date.today() + relativedelta(months=3)),
+				 "coupondates" : np.array([portfoliofuns.date_to_day(date.today() + relativedelta(months=1)),
+				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=2)),
+				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=3)), 
+				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=3))]),
+				 "couponpayments" : np.array([10, 10, 10, 100]) }
+
 
 some other notes:
 in position_value currenttime is a float representing number of years?
-in mc_duration currenttime is a datetime64 object.
+in mc_duration currenttime is a day number.
+days are numbered with integers with, day 0 = 1962-01-02
+
 """
 
 	
