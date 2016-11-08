@@ -254,6 +254,11 @@ def day_to_date(daynumber = None):
 		return None
 
 
+	newdate = epoch + datetime.timedelta(days = daynumber)
+
+	return newdate
+
+
 
 
 

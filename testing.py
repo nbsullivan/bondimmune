@@ -113,5 +113,8 @@ if __name__ == '__main__':
 	print "portfolio duration:"
 	print portdur
 
+	print "this should read \"1962-01-03\""
+	print portfoliofuns.day_to_date(daynumber = 1)
+
 
 
