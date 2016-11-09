@@ -116,7 +116,9 @@ if __name__ == '__main__':
 	print "this should read \"1962-01-03\""
 	print portfoliofuns.day_to_date(daynumber = 1)
 
-	
+
+	print "testing grabing interestrate data from the dataset"
+	print portfoliofuns.todays_rates(daynumber = 0)
 
 
 

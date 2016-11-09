@@ -3,6 +3,7 @@ import numpy as np
 import datetime
 from datetime import date
 from dateutil.relativedelta import relativedelta
+from math import isnan
 
 """
 	portfolio_list structure:
@@ -277,8 +278,31 @@ def todays_rates(daynumber = None, interestrate_df = None):
 	if interestrate_df == None:
 		interestrate_df = pd.read_csv("cleaned_data.csv")
 
+	day_dict = interestrate_df.loc[[daynumber]].to_dict('records')[0]
 
-	# grab the row that the daynumber corosponds to.
+	keys = day_dict.keys()
+
+	# remove day number and date for moment
+	keys.remove('daynumber')
+	keys.remove('date')
+
+	clean_dict = {}
+
+	# we only want bond types that have interest rates or exist.
+	for key in keys:
+
+		if isnan(day_dict[key]):
+			pass
+
+		else:
+			clean_dict[key] = day_dict[key]
+
+
+
+	clean_dict['daynumber'] = day_dict['daynumber']
+	clean_dict['date'] = day_dict['date']
+
+	return clean_dict
 
 
 
