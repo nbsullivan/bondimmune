@@ -31,6 +31,10 @@ in position_value currenttime is a float representing number of years?
 in mc_duration currenttime is a day number.
 days are numbered with integers with, day 0 = 1962-01-02
 
+
+TODOS:
+- check pricing of bond with coupons, so check Pnull and position_value functions.
+- make function where number of coupons bond type and interestrate are used to make a position object.
 """
 
 	
@@ -131,6 +135,7 @@ def position_value(position = None, currenttime = None):
 def Pnull(position = None, n = None):
 	"""
 	gives P(0,n) as defined by derivatives market page 208 equation 7.1
+	This needs to be fixed
 	"""
 
 	# we are getting effective rate for the time period of the whole bond not yearly
@@ -175,7 +180,7 @@ def timeper(position = None):
 
 def effective_rate(position = None):
 	"""
-	effective rate for a bond, this also might be YTM
+	daily effective rate for a bond, this also might be YTM
 	"""
 
 	# get interest rate and time period of possition
@@ -189,7 +194,7 @@ def effective_rate(position = None):
 
 def portfolio_duration(portfolio = None, Durationtype = 'mc', currenttime = None):
 	"""
-	has not been tested yet.
+	returns either modified or macaulay duration for a portfolio
 	"""
 
 	portfolio_list = portfolio.to_dict('records')
