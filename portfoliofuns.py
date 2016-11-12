@@ -29,22 +29,24 @@ from pprint import pprint as pp
 
 
 some other notes:
-in position_value currenttime is a float representing number of years?
-in mc_duration currenttime is a day number.
+currenttime is a day number
 days are numbered with integers with, day 0 = 1962-01-02
 
-
 TODOS:
-- check pricing of bond with coupons, so check Pnull and position_value functions.
-- make function where number of coupons bond type and interestrate are used to make a position object.
-- double check all functions.
+1. make a random portfolio generator. (input vector of days and bondtypes, returns a portfolio as defined in testing.py)
+2. trim dataset to only include records where all bond types are availiable
+3. start making time loop
+4. consolidate helper functions
+5. 
+
+
+
 """
 
 	
 def mc_duration(position = None, currenttime = None):
 	"""
 	Macaulay Duration of a position, returns the durantion as a number of years (float).
-	This is currently not working.
 	"""
 
 	# get dates and payments this is moot for zero coupon bonds.
@@ -63,8 +65,12 @@ def mc_duration(position = None, currenttime = None):
 	mdate = offsetdates[-1]
 	mpayments = payments[-1]
 
+	cdates, cpayments = zero_out(cdates, cpayments)
 
 	presentvalue = position_value(position, currenttime)
+
+	print "presentvalue"
+	print presentvalue
 	effrate = effective_rate(position = position)
 
 	oneoverPV = 1/ presentvalue
@@ -73,7 +79,6 @@ def mc_duration(position = None, currenttime = None):
 
 	finalsum = mdate/365 * mpayments/(effrate**mdate)
 
-
 	macdur = oneoverPV* (couponsum + finalsum)
 
 
@@ -81,6 +86,9 @@ def mc_duration(position = None, currenttime = None):
 
 
 def mod_duration(position = None, currenttime = None):
+	"""
+	returns modified duration of a position at a currenttime
+	"""
 
 	macdur = mc_duration(position = position, currenttime = currenttime)
 	effrate = effective_rate(position = position)
@@ -92,9 +100,8 @@ def mod_duration(position = None, currenttime = None):
 def position_value(position = None, currenttime = None):
 	"""
 	calculate the value of a position, can accept long and short positions.
+	but short positions have not been coded yet
 	returns position value based on derivates market book.
-	position: a bond dictionary
-	currenttime: a day number of the currenttime
 	"""
 
 
@@ -126,30 +133,12 @@ def position_value(position = None, currenttime = None):
 
 	return posvalue
 
-def Pnull(position = None, n = None):
-	"""
-	gives P(0,n) as defined by derivatives market page 208 equation 7.1
-	This needs to be fixed
-	"""
-
-	# we are getting effective rate for the time period of the whole bond not yearly
-	effrate = effective_rate(position)
-
-	timeperiod = timeper(position)
-
-
-	Pc = position["couponpayments"] 
-	tc = position["coupondates"] - position["createdate"]
-
-	PV = np.sum(Pc/(effrate**tc))
-
-	return PV
-
 
 
 def timeper(position = None):
 	"""
-	return effective rate and time period of bond, given a bondtype and interestrate as defined above.
+	returns time period of bond, given a bondtype.
+	This might not be used.
 	"""
 	bondtype = position["bondtype"]
 	interestrate = position["interestrate"]
@@ -174,7 +163,7 @@ def timeper(position = None):
 
 def effective_rate(position = None):
 	"""
-	monthly effective rate for a bond, this also might be YTM
+	daily effective rate for a bond, this also might be YTM
 	"""
 
 	# get interest rate and time period of possition
