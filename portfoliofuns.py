@@ -14,17 +14,18 @@ from pprint import pprint as pp
 
 	position dictionary strcture: (same as a row in the portfolio dataframe)
 
-	position = { "weight": 100,
+	position = { "weight": 1,
 				 "positiontype": "long",
-				 "bondtype" : "3-month",
-				 "interestrate" : .05,
-				 "createdate" : portfoliofuns.date_to_day(date.today()),
-				 "maturitydate" : portfoliofuns.date_to_day(date.today() + relativedelta(months=3)),
-				 "coupondates" : np.array([portfoliofuns.date_to_day(date.today() + relativedelta(months=1)),
-				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=2)),
-				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=3)), 
-				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=3))]),
-				 "couponpayments" : np.array([10, 10, 10, 100]) }
+				 "bondtype" : "6-month",
+				 "interestrate" : .046,
+				 "createdate" : portfoliofuns.date_to_day(startdate),
+				 "maturitydate" : portfoliofuns.date_to_day(startdate + relativedelta(months=6)),
+				 "coupondates" : np.array([portfoliofuns.date_to_day(startdate + relativedelta(months=2)),
+				 							portfoliofuns.date_to_day(startdate + relativedelta(months=4)),
+				 							portfoliofuns.date_to_day(startdate + relativedelta(months=6)), 
+				 							portfoliofuns.date_to_day(startdate + relativedelta(months=6)),]),
+				 "couponpayments" : np.array([70, 70, 70, 1000]),
+				 "payperyear" : 6 }
 
 
 some other notes:
@@ -54,24 +55,27 @@ def mc_duration(position = None, currenttime = None):
 	if currenttime == None:
 		currenttime = date_to_day()
 
-	# make the t_j - t_0 terms
-	offsetdates = (dates - float(currenttime)) / 365
-
-	# do the same things with the dates. also they are in terms of days.
-	datesunitless = (dates - float(position["createdate"])) / 365
+	offsetdates = (dates - float(currenttime))
 
 
-	# note things are not happy when we are doing this days and years do not have the same base unit, this assume we are not in a leap year
-	Pjslist = np.array([position_value(position = position, currenttime = b) for (a,b) in np.ndenumerate(offsetdates)])
-
-	macdur = np.sum(Pjslist * offsetdates) / np.sum(Pjslist * datesunitless)
-
-	# grab time period for scaling duration
-	timeperiod = timeper(position = position)
+	cdates = offsetdates[:-1]
+	cpayments = payments[:-1]
+	mdate = offsetdates[-1]
+	mpayments = payments[-1]
 
 
-	# change the unit of macdur to the time period of the bond.
-	macdur = macdur * timeperiod
+	presentvalue = position_value(position, currenttime)
+	effrate = effective_rate(position = position)
+
+	oneoverPV = 1/ presentvalue
+
+	couponsum = np.sum((cdates/365) * cpayments / (effrate**cdates))
+
+	finalsum = mdate/365 * mpayments/(effrate**mdate)
+
+
+	macdur = oneoverPV* (couponsum + finalsum)
+
 
 	return macdur
 
@@ -81,35 +85,16 @@ def mod_duration(position = None, currenttime = None):
 	macdur = mc_duration(position = position, currenttime = currenttime)
 	effrate = effective_rate(position = position)
 
-	moddur = macdur / (((effrate - 1)/position["coupondates"].size) + 1)
-
+	moddur = macdur / effrate
 	return moddur
 
-
-
-
-def asset_procceds(portfolio = None):
-	"""
-	asset procceds of a portfolio
-	"""
-
-	############### TODO ################
-
-	return None
-
-def liability_outgo(portfolio = None):
-	"""
-	liability-outgo of a portfolio
-	"""
-
-	############### TODO ################
-
-	return None
 
 def position_value(position = None, currenttime = None):
 	"""
 	calculate the value of a position, can accept long and short positions.
-	returns position value based on derivates market book
+	returns position value based on derivates market book.
+	position: a bond dictionary
+	currenttime: a day number of the currenttime
 	"""
 
 
@@ -119,7 +104,7 @@ def position_value(position = None, currenttime = None):
 
 	if position["positiontype"] == 'long':
 		"""
-		based on derriavitives market book page 209 equation 7.4
+		
 		"""
 		# get effective rate and time period
 		effrate = effective_rate(position = position)
@@ -128,6 +113,7 @@ def position_value(position = None, currenttime = None):
 		# get Payments and days
 		Pc = position["couponpayments"] 
 		tnow = position["coupondates"] - currenttime
+
 
 		# set them relative to current time
 		tnew, Pcnew = zero_out(tnow, Pc)
@@ -188,7 +174,7 @@ def timeper(position = None):
 
 def effective_rate(position = None):
 	"""
-	daily effective rate for a bond, this also might be YTM
+	monthly effective rate for a bond, this also might be YTM
 	"""
 
 	# get interest rate and time period of possition
@@ -327,7 +313,8 @@ def zero_out(tnow = None, Pc = None):
 	Pcnew = []
 	k = 0
 	for x in np.nditer(tnow):
-	    print x
+
+		# if the day is less than zero do not add it.
 	    if x > 0:
 	    	tnew.append(tnow[k])
 	    	Pcnew.append(Pc[k])
