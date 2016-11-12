@@ -4,6 +4,7 @@ import datetime
 from datetime import date
 from dateutil.relativedelta import relativedelta
 from math import isnan
+from pprint import pprint as pp
 
 """
 	portfolio_list structure:
@@ -35,12 +36,14 @@ days are numbered with integers with, day 0 = 1962-01-02
 TODOS:
 - check pricing of bond with coupons, so check Pnull and position_value functions.
 - make function where number of coupons bond type and interestrate are used to make a position object.
+- double check all functions.
 """
 
 	
 def mc_duration(position = None, currenttime = None):
 	"""
 	Macaulay Duration of a position, returns the durantion as a number of years (float).
+	This is currently not working.
 	"""
 
 	# get dates and payments this is moot for zero coupon bonds.
@@ -109,6 +112,7 @@ def position_value(position = None, currenttime = None):
 	returns position value based on derivates market book
 	"""
 
+
 	if position["positiontype"] == 'short':
 		pass
 		# do something
@@ -121,10 +125,14 @@ def position_value(position = None, currenttime = None):
 		effrate = effective_rate(position = position)
 		timeperiod = timeper(position = position)
 
-		t0price = Pnull(position = position, n = currenttime)
-		t1price = Pnull(position = position, n = timeperiod)
+		# get Payments and days
+		Pc = position["couponpayments"] 
+		tnow = position["coupondates"] - currenttime
 
-		posvalue = t0price / t1price
+		# set them relative to current time
+		tnew, Pcnew = zero_out(tnow, Pc)
+
+		posvalue = np.sum(Pcnew/(effrate**tnew))
 
 	else:
 		print "bad positiontype"
@@ -310,7 +318,26 @@ def todays_rates(daynumber = None, interestrate_df = None):
 	return clean_dict
 
 
+def zero_out(tnow = None, Pc = None):
+	"""
+	removes elements from tnow and Pc lists when tnow <= 0 
+	"""
 
+	tnew = []
+	Pcnew = []
+	k = 0
+	for x in np.nditer(tnow):
+	    print x
+	    if x > 0:
+	    	tnew.append(tnow[k])
+	    	Pcnew.append(Pc[k])
+
+	    k = k + 1
+
+	tnew = np.array(tnew)
+	Pcnew = np.array(Pcnew)
+
+	return tnew, Pcnew
 
 
 

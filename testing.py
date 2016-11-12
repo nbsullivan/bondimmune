@@ -38,12 +38,13 @@ if __name__ == '__main__':
 	print "Pnull value"
 	print P
 
-	Positionvalue = portfoliofuns.position_value(position = position, currenttime = 2./12)
+	currenttime = portfoliofuns.date_to_day(date.today())
+	Positionvalue = portfoliofuns.position_value(position = position, currenttime = currenttime)
 
-	# finding value of bond after 1 month
-	print "position value at 1 month bond after."
+	# finding value of bond after 2 month
+	print "position value at creation time of bond."
 	print Positionvalue
-
+	"""
 	# testing out mc_duration calculation.
 	mcdur = portfoliofuns.mc_duration(position = position, currenttime = portfoliofuns.date_to_day())
 
@@ -119,6 +120,8 @@ if __name__ == '__main__':
 
 	print "testing grabing interestrate data from the dataset"
 	print portfoliofuns.todays_rates(daynumber = 0)
+
+	"""
 
 
 
