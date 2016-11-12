@@ -138,6 +138,7 @@ def position_value(position = None, currenttime = None):
 def timeper(position = None):
 	"""
 	returns time period of bond, given a bondtype.
+	This might not be used.
 	"""
 	bondtype = position["bondtype"]
 	interestrate = position["interestrate"]
