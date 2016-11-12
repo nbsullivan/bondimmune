@@ -4,6 +4,7 @@ import datetime
 from datetime import date
 from dateutil.relativedelta import relativedelta
 from math import isnan
+from pprint import pprint as pp
 
 """
 	portfolio_list structure:
@@ -13,28 +14,33 @@ from math import isnan
 
 	position dictionary strcture: (same as a row in the portfolio dataframe)
 
-	position = { "weight": 100,
+	position = { "weight": 1,
 				 "positiontype": "long",
-				 "bondtype" : "3-month",
-				 "interestrate" : .05,
-				 "createdate" : portfoliofuns.date_to_day(date.today()),
-				 "maturitydate" : portfoliofuns.date_to_day(date.today() + relativedelta(months=3)),
-				 "coupondates" : np.array([portfoliofuns.date_to_day(date.today() + relativedelta(months=1)),
-				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=2)),
-				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=3)), 
-				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=3))]),
-				 "couponpayments" : np.array([10, 10, 10, 100]) }
+				 "bondtype" : "6-month",
+				 "interestrate" : .046,
+				 "createdate" : portfoliofuns.date_to_day(startdate),
+				 "maturitydate" : portfoliofuns.date_to_day(startdate + relativedelta(months=6)),
+				 "coupondates" : np.array([portfoliofuns.date_to_day(startdate + relativedelta(months=2)),
+				 							portfoliofuns.date_to_day(startdate + relativedelta(months=4)),
+				 							portfoliofuns.date_to_day(startdate + relativedelta(months=6)), 
+				 							portfoliofuns.date_to_day(startdate + relativedelta(months=6)),]),
+				 "couponpayments" : np.array([70, 70, 70, 1000]),
+				 "payperyear" : 6 }
 
 
 some other notes:
-in position_value currenttime is a float representing number of years?
-in mc_duration currenttime is a day number.
+currenttime is a day number
 days are numbered with integers with, day 0 = 1962-01-02
 
-
 TODOS:
-- check pricing of bond with coupons, so check Pnull and position_value functions.
-- make function where number of coupons bond type and interestrate are used to make a position object.
+1. make a random portfolio generator. (input vector of days and bondtypes, returns a portfolio as defined in testing.py)
+2. trim dataset to only include records where all bond types are availiable
+3. start making time loop
+4. consolidate helper functions
+5. 
+
+
+
 """
 
 	
@@ -51,63 +57,53 @@ def mc_duration(position = None, currenttime = None):
 	if currenttime == None:
 		currenttime = date_to_day()
 
-	# make the t_j - t_0 terms
-	offsetdates = (dates - float(currenttime)) / 365
-
-	# do the same things with the dates. also they are in terms of days.
-	datesunitless = (dates - float(position["createdate"])) / 365
+	offsetdates = (dates - float(currenttime))
 
 
-	# note things are not happy when we are doing this days and years do not have the same base unit, this assume we are not in a leap year
-	Pjslist = np.array([position_value(position = position, currenttime = b) for (a,b) in np.ndenumerate(offsetdates)])
+	cdates = offsetdates[:-1]
+	cpayments = payments[:-1]
+	mdate = offsetdates[-1]
+	mpayments = payments[-1]
 
-	macdur = np.sum(Pjslist * offsetdates) / np.sum(Pjslist * datesunitless)
+	cdates, cpayments = zero_out(cdates, cpayments)
 
-	# grab time period for scaling duration
-	timeperiod = timeper(position = position)
+	presentvalue = position_value(position, currenttime)
 
+	print "presentvalue"
+	print presentvalue
+	effrate = effective_rate(position = position)
 
-	# change the unit of macdur to the time period of the bond.
-	macdur = macdur * timeperiod
+	oneoverPV = 1/ presentvalue
+
+	couponsum = np.sum((cdates/365) * cpayments / (effrate**cdates))
+
+	finalsum = mdate/365 * mpayments/(effrate**mdate)
+
+	macdur = oneoverPV* (couponsum + finalsum)
+
 
 	return macdur
 
 
 def mod_duration(position = None, currenttime = None):
+	"""
+	returns modified duration of a position at a currenttime
+	"""
 
 	macdur = mc_duration(position = position, currenttime = currenttime)
 	effrate = effective_rate(position = position)
 
-	moddur = macdur / (((effrate - 1)/position["coupondates"].size) + 1)
-
+	moddur = macdur / effrate
 	return moddur
 
-
-
-
-def asset_procceds(portfolio = None):
-	"""
-	asset procceds of a portfolio
-	"""
-
-	############### TODO ################
-
-	return None
-
-def liability_outgo(portfolio = None):
-	"""
-	liability-outgo of a portfolio
-	"""
-
-	############### TODO ################
-
-	return None
 
 def position_value(position = None, currenttime = None):
 	"""
 	calculate the value of a position, can accept long and short positions.
-	returns position value based on derivates market book
+	but short positions have not been coded yet
+	returns position value based on derivates market book.
 	"""
+
 
 	if position["positiontype"] == 'short':
 		pass
@@ -115,16 +111,21 @@ def position_value(position = None, currenttime = None):
 
 	if position["positiontype"] == 'long':
 		"""
-		based on derriavitives market book page 209 equation 7.4
+		
 		"""
 		# get effective rate and time period
 		effrate = effective_rate(position = position)
 		timeperiod = timeper(position = position)
 
-		t0price = Pnull(position = position, n = currenttime)
-		t1price = Pnull(position = position, n = timeperiod)
+		# get Payments and days
+		Pc = position["couponpayments"] 
+		tnow = position["coupondates"] - currenttime
 
-		posvalue = t0price / t1price
+
+		# set them relative to current time
+		tnew, Pcnew = zero_out(tnow, Pc)
+
+		posvalue = np.sum(Pcnew/(effrate**tnew))
 
 	else:
 		print "bad positiontype"
@@ -132,30 +133,12 @@ def position_value(position = None, currenttime = None):
 
 	return posvalue
 
-def Pnull(position = None, n = None):
-	"""
-	gives P(0,n) as defined by derivatives market page 208 equation 7.1
-	This needs to be fixed
-	"""
-
-	# we are getting effective rate for the time period of the whole bond not yearly
-	effrate = effective_rate(position)
-
-	timeperiod = timeper(position)
-
-
-	Pc = position["couponpayments"] 
-	tc = position["coupondates"] - position["createdate"]
-
-	PV = np.sum(Pc/(effrate**tc))
-
-	return PV
-
 
 
 def timeper(position = None):
 	"""
-	return effective rate and time period of bond, given a bondtype and interestrate as defined above.
+	returns time period of bond, given a bondtype.
+	This might not be used.
 	"""
 	bondtype = position["bondtype"]
 	interestrate = position["interestrate"]
@@ -310,7 +293,27 @@ def todays_rates(daynumber = None, interestrate_df = None):
 	return clean_dict
 
 
+def zero_out(tnow = None, Pc = None):
+	"""
+	removes elements from tnow and Pc lists when tnow <= 0 
+	"""
 
+	tnew = []
+	Pcnew = []
+	k = 0
+	for x in np.nditer(tnow):
+
+		# if the day is less than zero do not add it.
+	    if x > 0:
+	    	tnew.append(tnow[k])
+	    	Pcnew.append(Pc[k])
+
+	    k = k + 1
+
+	tnew = np.array(tnew)
+	Pcnew = np.array(Pcnew)
+
+	return tnew, Pcnew
 
 
 
