@@ -1,5 +1,5 @@
 import numpy as np
-import datetime
+import datetime 
 from datetime import date
 import portfoliofuns
 from dateutil.relativedelta import relativedelta
@@ -46,6 +46,7 @@ if __name__ == '__main__':
 	print Positionvalue
 	
 	# testing out mc_duration calculation.
+	currenttime = portfoliofuns.date_to_day(startdate + relativedelta(months=5))
 	mcdur = portfoliofuns.mc_duration(position = position, currenttime = currenttime)
 
 	print "maculay duration."
@@ -56,10 +57,10 @@ if __name__ == '__main__':
 	print "modified duration"
 	print moddur
 
-
+	"""
 	# testing portfolio duration function.
 
-	"""
+
 	# postion 1 same as above 1/3 weight
 	position1 = { "weight": 1./3,
 				 "positiontype": "long",
@@ -121,6 +122,7 @@ if __name__ == '__main__':
 	print "testing grabing interestrate data from the dataset"
 	print portfoliofuns.todays_rates(daynumber = 0)
 	"""
+
 
 
 
