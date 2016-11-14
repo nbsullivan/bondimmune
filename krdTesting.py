@@ -13,6 +13,9 @@ import numpy as np
 #    interest rates
 #  .Portfolio computations currently performed on class object BONDS
 #  .Cash flow objects are Numpy arrays produced by class krd.cBond()
+#
+# WEAKNESSES:
+#  .Current test script lacks means to generate precise month lengths
 
 
 # Coupon bond class object
