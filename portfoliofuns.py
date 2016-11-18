@@ -263,13 +263,16 @@ def todays_rates(daynumber = None, interestrate_df = None):
 		daynumer = date_to_day(date.today())
 
 	# if no interestrate_df use fed dataset
-	if interestrate_df == None:
+	if not isinstance(interestrate_df, pd.DataFrame):
 		interestrate_df = pd.read_csv("cleaned_data.csv")
+
 
 	day_dict = interestrate_df.loc[[daynumber]].to_dict('records')[0]
 
 	keys = day_dict.keys()
 
+
+	# the following below is not nessicary if using the trimmed dataset.
 	# remove day number and date for moment
 	keys.remove('daynumber')
 	keys.remove('date')
