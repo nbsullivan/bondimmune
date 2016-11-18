@@ -168,7 +168,7 @@ def effective_rate(position = None):
 
 	# get interest rate and time period of possition
 	interestrate = position["interestrate"]
-	timeperiod = timeper(position)
+	#timeperiod = timeper(position)
 
 	effectiverate = (1 + interestrate)**(1./365)
 
@@ -317,8 +317,53 @@ def zero_out(tnow = None, Pc = None):
 
 
 
-
-
+ 
+class cBond:
+    def new(self,faceValue,matMonths,annualCouponNum,couponRate,
+            createDate = date(1962, 1, 2)):
+    #   Constructs coupon bond at monthly scale. Assuming equally spaced 
+    #    payments. Also assuming annualCouponNum is a factor of 12 and that 
+    #    matMonths is a multiple of this factor.
+    #
+    #    faceValue         Face value of bond;  scalar
+    #    matMonths         Months to maturity;   scalar
+    #    annualCouponNum   Number of coupons per year;   scalar
+    #    couponRate        Coupon value as a percent of face value;   scalar
+    #    createDate        Date bond was created (i.e., day 0)
+        if annualCouponNum == 0:
+            C = faceValue
+            T = date_to_day(createDate+relativedelta(months=matMonths))
+        else:
+            if 12 % annualCouponNum != 0:
+                raise RuntimeError('annualCouponNum must be a factor of 12')    
+            k = 12/annualCouponNum                             # step size (months)
+            if matMonths % k != 0:
+                raise RuntimeError('matMonths must align with annualCouponNum')
+            n = matMonths/k                                    # number of payments
+            cc = couponRate * faceValue       
+            C = np.zeros(n)    
+            T = np.zeros(n)
+            for i in range(n):
+                C[i] = cc;   
+                T[i] = date_to_day(createDate+relativedelta(months=(i+1)*k))
+                if i==n-1:
+                    C[i] += faceValue 
+        return C, T
+    
+'''
+    def shift(self,bond,startMonth,endMonth):
+    #   Shifts coupon bond for alignment with other bonds and timing.
+    #
+    #    bond          Bond object constructed by .new function
+    #    startMonth    Month bond timing begins (prepending 0s)
+    #    endMonth      Month bond tracking ends (postpending 0s)
+        prepend = np.zeros((1,startMonth-1))
+        sbond = np.append(prepend,bond)
+        if endMonth > bond.size:
+            postpend = np.zeros((1,endMonth-bond.size))
+            sbond = np.append(sbond,postpend)
+        return sbond
+'''
 
 
 

@@ -16,21 +16,17 @@ if __name__ == '__main__':
 
 	startdate = datetime.datetime.strptime(dt_str, "%m/%d/%Y").date()
 	
-
+	cbond = portfoliofuns.cBond(); 
+	couponpayments, coupondates = cbond.new(1000,6,6,.07,startdate)
 	position = { "weight": 1,
 				 "positiontype": "long",
 				 "bondtype" : "6-month",
 				 "interestrate" : .046,
 				 "createdate" : portfoliofuns.date_to_day(startdate),
 				 "maturitydate" : portfoliofuns.date_to_day(startdate + relativedelta(months=6)),
-				 "coupondates" : np.array([portfoliofuns.date_to_day(startdate + relativedelta(months=2)),
-				 							portfoliofuns.date_to_day(startdate + relativedelta(months=4)),
-				 							portfoliofuns.date_to_day(startdate + relativedelta(months=6)), 
-				 							portfoliofuns.date_to_day(startdate + relativedelta(months=6)),]),
-				 "couponpayments" : np.array([70, 70, 70, 1000]),
-				 "payperyear" : 6 }
-
-	
+				 "coupondates" : coupondates,
+				 "couponpayments" : couponpayments,     
+				 "payperyear" : 6 } # not currently used in computations
 
 	# testing effective_rate
 	effrate = portfoliofuns.effective_rate(position)
@@ -57,7 +53,7 @@ if __name__ == '__main__':
 	print "modified duration"
 	print moddur
 
-	"""
+	
 	# testing portfolio duration function.
 
 
@@ -121,7 +117,7 @@ if __name__ == '__main__':
 
 	print "testing grabing interestrate data from the dataset"
 	print portfoliofuns.todays_rates(daynumber = 0)
-	"""
+
 
 
 
