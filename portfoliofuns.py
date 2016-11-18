@@ -304,7 +304,7 @@ def zero_out(tnow = None, Pc = None):
 	for x in np.nditer(tnow):
 
 		# if the day is less than zero do not add it.
-	    if x > 0:
+	    if x >= 0:
 	    	tnew.append(tnow[k])
 	    	Pcnew.append(Pc[k])
 
