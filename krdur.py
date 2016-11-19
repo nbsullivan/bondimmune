@@ -13,7 +13,6 @@
 
 
 import numpy as np                               # MATLAB-style functions
-import portfoliofuns as pf
 
 
 
@@ -26,7 +25,7 @@ def krdprepare(bond,currentTime,keyrates,mode='disc'):
         Y = annI(bond["interestrate"],mode=mode)
         if type(Y)==float or Y.size==1:
             Y = Y * np.ones(c0)            
-        T, CF = pf.zero_out(T,CF);   Y = Y[(c0-CF.size):]
+        CF[T<=0] = 0;
         return T, CF, Y
    
     
@@ -51,10 +50,16 @@ def krdbond(bond,currentTime=None,keyrates='default',mode='disc'):
     T, CF, Y = krdprepare(bond,currentTime,keyrates,mode)    
     P = pvalcf(T,CF,Y,mode)
     if mode=='cont':
-        KRD = 1/P * CF*T/np.exp(Y*T)
+        if P==0:
+            KRD = np.zeros(CF.size)
+        else:
+            KRD = 1/P * CF*T/np.exp(Y*T)
     elif mode=='disc':
-        n = 365
-        KRD = 1/P * CF*T/((1+Y/n)**(n*T+1))
+        if P==0:
+            KRD = np.zeros(CF.size)
+        else:
+            n = 365
+            KRD = 1/P * CF*T/((1+Y/n)**(n*T+1))
     return KRD,P
 
     

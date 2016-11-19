@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import datetime
 from dateutil.relativedelta import relativedelta
-import krdur_pd as krd
+import krdur as krd
 import portfoliofuns
 
 
@@ -92,34 +92,36 @@ bondConstructor = {
 
 def bonder(bC):
     # Creates a portfolio of bonds as specified by bond constructor bC.
+    b = int(bC["weight"].size)
     L = ["interestrate","weight","createdate","coupondates","couponpayments"]
     V = [bC["interestrate"],
          bC["weight"],
-         [portfoliofuns.date_to_day(bC["createDate"][i]) for i in range(5)],
+         [portfoliofuns.date_to_day(bC["createDate"][i]) for i in range(b)],
          [np.append(cbond.new(bC["faceValues"][i],   # coupon dates
                     bC["matMonths"][i],
                     bC["annualCouponNum"][i],
                     bC["couponRate"][i],
                     bC["createDate"][i])[1],
-                    portfoliofuns.date_to_day(bC["createDate"][i])*np.ones(5-i-1)) for i in range(5)],
+                    portfoliofuns.date_to_day(bC["createDate"][i])*np.ones(b-i-1)) for i in range(b)],
          [np.append(cbond.new(bC["faceValues"][i],   # coupon payments
                     bC["matMonths"][i],
                     bC["annualCouponNum"][i],
                     bC["couponRate"][i],
-                    bC["createDate"][i])[0],np.zeros(5-i-1)) for i in range(5)]
+                    bC["createDate"][i])[0],np.zeros(b-i-1)) for i in range(b)]
           ]           
-    portfolio = [{L[j]: V[j][i] for j in range(5)} for i in range(5) ]
+    portfolio = [{L[j]: V[j][i] for j in range(5)} for i in range(b) ]
     return portfolio
 
        
 portfolio = bonder(bondConstructor)
 portfolio_df = pd.DataFrame(portfolio)    
 
-#newtime = portfoliofuns.date_to_day(createDate + relativedelta(months=5))
-keyport = krd.krdport(portfolio_df)
+newtime = portfoliofuns.date_to_day(createDate + relativedelta(months=15))
+#newtime = portfoliofuns.date_to_day(createDate)
+keyport = krd.krdport(portfolio_df,newtime)
 
 print "KRD of portfolio with 1-5 year bonds (1 year durations & full duration)"
 print keyport[0];  print np.sum(keyport[0]); 
-print "Present value: ";  print keyport[1];  print ' '
+print "Present value: ";  print keyport[1]; print np.sum(keyport[1]);  print ' '
 
 
