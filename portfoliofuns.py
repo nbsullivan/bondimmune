@@ -260,7 +260,7 @@ def todays_rates(daynumber = None, interestrate_df = None):
 
 	# if no day number use todays number
 	if daynumber == None:
-		daynumer = date_to_day(date.today())
+		daynumber = date_to_day(date.today())
 
 	# if no interestrate_df use fed dataset
 	if not isinstance(interestrate_df, pd.DataFrame):
@@ -307,7 +307,7 @@ def zero_out(tnow = None, Pc = None):
 	for x in np.nditer(tnow):
 
 		# if the day is less than zero do not add it.
-	    if x > 0:
+	    if x >= 0:
 	    	tnew.append(tnow[k])
 	    	Pcnew.append(Pc[k])
 
