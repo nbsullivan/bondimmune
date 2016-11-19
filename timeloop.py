@@ -25,7 +25,14 @@ if __name__ == '__main__':
 	# portfolio = portfoliofuns.buildportfolio()
 
 
-
+	"""
+	I do not think that we will need to deal with the entire time frame at once, so for a given case study
+	we will want to look at a smaller range of dates aside from the full dataset. Also if we want to look at some important
+	areas (1970s rate hikes?) we shouldn't use the trimmed data set, but thankfully portfoliofuns.todays_rates() returns only the rates
+	that are avaliable during a day even if some are missing (this is dependent on the dataset used, if nothing is passed to 
+	todays_rates then it uses the full fed dataset). We should identify 3-4 time periods of interesting rate changes, or boring rate changes
+	to test the immunization stragies.
+	"""
 	# the actaul loop where things are going down.
 	for daynum in index_list:
 
