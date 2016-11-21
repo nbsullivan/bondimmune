@@ -15,7 +15,6 @@
 import numpy as np                               # MATLAB-style functions
 
 
-
 def krdprepare(bond,currentTime,keyrates,mode='disc'):
     # Prepares bond-position object for use with krd functions.
     #  Will also be used to control keyrates for mismatched.
@@ -40,7 +39,7 @@ def annI(effY,n=365,mode='disc'):
 #######################################0#######################################
 
  # GATEWAY FUNCTION   
-def krdbond(bond,currentTime=None,keyrates='default',mode='disc'):
+def krdbond(bond,currentTime=None,keyrates='default',mode='disc',indiv=False):
 #   Computes key rate durations of cash flows.
 #    T    Term structure;  vector 1-by-N
 #    CF   Cash flow;       vector 1-by-N
@@ -48,14 +47,15 @@ def krdbond(bond,currentTime=None,keyrates='default',mode='disc'):
     if currentTime == None:
         currentTime = bond["createdate"]
     T, CF, Y = krdprepare(bond,currentTime,keyrates,mode)    
-    P = pvalcf(T,CF,Y,mode)
+    P = pvalcf(T,CF,Y,mode,indiv=indiv)
+    Psum = np.sum(P)
     if mode=='cont':
-        if P==0:
+        if Psum==0:
             KRD = np.zeros(CF.size)
         else:
             KRD = 1/P * CF*T/np.exp(Y*T)
     elif mode=='disc':
-        if P==0:
+        if Psum==0:
             KRD = np.zeros(CF.size)
         else:
             n = 365
@@ -64,23 +64,25 @@ def krdbond(bond,currentTime=None,keyrates='default',mode='disc'):
 
     
      
-def pvalcf(T,CF,Y,mode='disc'):
+def pvalcf(T,CF,Y,mode='disc',indiv=False):
 #   Computes present value of cash flows.
-#    T    Term structure;  vector 1-by-N
+#    T    Term structure;  vector 1-by-N  (years)
 #    CF   Cash flow;       vector 1-by-N
-#    Y    Yield structure; vector 1-by-N
+#    Y    Yield structure; vector 1-by-N  (annual effective rate)
     if mode=='cont':
         s = CF/np.exp(Y*T)
-        P = np.sum(s)
     elif mode=='disc':
         n = 365
         s = CF/((1+Y/n)**(n*T))
+    if indiv==False:
         P = np.sum(s)
+    elif indiv==True:
+        P = s
     return P
 #######################################1#######################################
 
 
-def krdport(portfolio,currentTime=None,keyrates='default'):
+def krdport(portfolio,currentTime=None,keyrates='default',mode='disc'):
 #   Computes key rate duration of portfolio. Requires input bonds to have same 
 #    payment length (i.e., padding with zeros). This requirement will be
 #    handled by krdprepare.py
@@ -90,9 +92,9 @@ def krdport(portfolio,currentTime=None,keyrates='default'):
     W = []
     P = []
     for bond in BONDS:
-        KRD = np.append(KRD,krdbond(bond,currentTime)[0]);  
+        KRD = np.append(KRD,krdbond(bond,currentTime,mode=mode)[0]);  
         W = np.append(W,bond["weight"])
-        P = np.append(P,krdbond(bond,currentTime)[1])
+        P = np.append(P,krdbond(bond,currentTime,mode=mode)[1])
     KRD = KRD.reshape(b,len(KRD)/b)
     S = W*np.transpose(KRD)
     KRDport = np.sum(S,1)
