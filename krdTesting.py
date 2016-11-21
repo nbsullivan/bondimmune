@@ -3,28 +3,28 @@ import pandas as pd
 import datetime
 from dateutil.relativedelta import relativedelta
 import krdur as krd
-import portfoliofuns
+import portfoliofuns as pf
 
 
 # TODO: Solve mismatched case
 
 
 # Coupon bond class object
-cbond = portfoliofuns.cBond()
+cbond = pf.cBond()
 
 
 # [1] Single 1-coupon bond present value and key rate durations
 dt_str = '1/1/2012'
 createDate = datetime.datetime.strptime(dt_str, "%m/%d/%Y").date()
-CF0, T0 = cbond.new(1000,1*12,1,.10,createDate)
-Y0 = np.array([.05])
+CF0, T0 = cbond.new(100,5,0,.10,createDate)
+Y0 = np.array([.06])
 bond = { "interestrate" : Y0,
-         "createdate" : portfoliofuns.date_to_day(createDate),
+         "createdate" : pf.date_to_day(createDate),
          "coupondates" : T0,
          "couponpayments" : CF0} 
 keybond0 = krd.krdbond(bond)
   
-print "KRD of 1-coupon bond";  print np.sum(keybond0[0]); 
+print "KRD of 0-coupon bond";  print np.sum(keybond0[0]); 
 print "Present value: ";  print keybond0[1];  print ' '
 
 
@@ -36,7 +36,7 @@ createDate = datetime.datetime.strptime(dt_str, "%m/%d/%Y").date()
 CF6month, T6month = cbond.new(1000,6,6,.07,createDate)
 Y6month = np.array([.046])
 bond = { "interestrate" : Y6month,
-         "createdate" : portfoliofuns.date_to_day(createDate),
+         "createdate" : pf.date_to_day(createDate),
          "coupondates" : T6month,
          "couponpayments" : CF6month} 
 keybond6month = krd.krdbond(bond)
@@ -45,7 +45,7 @@ print "KRD of 6-month bond (2 month durations & full duration)"
 print keybond6month[0]; print np.sum(keybond6month[0]); 
 print "Present value: ";  print keybond6month[1];  print ' '
 
-newtime = portfoliofuns.date_to_day(createDate + relativedelta(months=5))
+newtime = pf.date_to_day(createDate + relativedelta(months=5))
 keybond6monthnew = krd.krdbond(bond,currentTime=newtime)
 
 print "KRD of 6-month bond (later date)"
@@ -59,10 +59,10 @@ print "Present value: ";  print keybond6monthnew[1];  print ' '
 dt_str = '1/1/2012'
 createDate = datetime.datetime.strptime(dt_str, "%m/%d/%Y").date()
 CF, T = cbond.new(1000,5*12,1,.10,createDate)
-T = portfoliofuns.date_to_day(createDate) + 365*np.arange(1,5+1,1) # ignore leap years
+T = pf.date_to_day(createDate) + 365*np.arange(1,5+1,1) # ignore leap years
 Y = np.array([.05,.055,.0575,.059,.06])
 bond = { "interestrate" : Y,
-         "createdate" : portfoliofuns.date_to_day(createDate),
+         "createdate" : pf.date_to_day(createDate),
          "coupondates" : T,
          "couponpayments" : CF} 
 keybond = krd.krdbond(bond,mode='cont')
@@ -96,13 +96,13 @@ def bonder(bC):
     L = ["interestrate","weight","createdate","coupondates","couponpayments"]
     V = [bC["interestrate"],
          bC["weight"],
-         [portfoliofuns.date_to_day(bC["createDate"][i]) for i in range(b)],
+         [pf.date_to_day(bC["createDate"][i]) for i in range(b)],
          [np.append(cbond.new(bC["faceValues"][i],   # coupon dates
                     bC["matMonths"][i],
                     bC["annualCouponNum"][i],
                     bC["couponRate"][i],
                     bC["createDate"][i])[1],
-                    portfoliofuns.date_to_day(bC["createDate"][i])*np.ones(b-i-1)) for i in range(b)],
+                    pf.date_to_day(bC["createDate"][i])*np.ones(b-i-1)) for i in range(b)],
          [np.append(cbond.new(bC["faceValues"][i],   # coupon payments
                     bC["matMonths"][i],
                     bC["annualCouponNum"][i],
@@ -116,8 +116,8 @@ def bonder(bC):
 portfolio = bonder(bondConstructor)
 portfolio_df = pd.DataFrame(portfolio)    
 
-newtime = portfoliofuns.date_to_day(createDate + relativedelta(months=15))
-#newtime = portfoliofuns.date_to_day(createDate)
+newtime = pf.date_to_day(createDate + relativedelta(months=15))
+#newtime = pf.date_to_day(createDate)
 keyport = krd.krdport(portfolio_df,newtime)
 
 print "KRD of portfolio with 1-5 year bonds (1 year durations & full duration)"

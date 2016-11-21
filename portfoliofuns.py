@@ -319,6 +319,21 @@ def zero_out(tnow = None, Pc = None):
 	return tnew, Pcnew
 
 
+ 
+def pval(T,CF,Y,mode='disc'):
+#   Computes present value of cash flows.
+#    T    Term structure;  vector 1-by-N
+#    CF   Cash flow;       vector 1-by-N
+#    Y    Yield structure; vector 1-by-N
+    if mode=='cont':
+        s = CF/np.exp(Y*T)
+        P = np.sum(s)
+    elif mode=='disc':
+        n = 365
+        s = CF/((1+Y/n)**(n*T))
+        P = np.sum(s)
+    return P
+
 
  
 class cBond:
@@ -334,8 +349,8 @@ class cBond:
     #    couponRate        Coupon value as a percent of face value;   scalar
     #    createDate        Date bond was created (i.e., day 0)
         if annualCouponNum == 0:
-            C = faceValue
-            T = date_to_day(createDate+relativedelta(months=matMonths))
+            C = np.array([faceValue])
+            T = np.array([date_to_day(createDate+relativedelta(months=matMonths))])
         else:
             if 12 % annualCouponNum != 0:
                 raise RuntimeError('annualCouponNum must be a factor of 12')    
