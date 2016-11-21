@@ -16,7 +16,7 @@ cbond = pf.cBond()
 # [1] Single 1-coupon bond present value and key rate durations
 dt_str = '1/1/2012'
 createDate = datetime.datetime.strptime(dt_str, "%m/%d/%Y").date()
-CF0, T0 = cbond.new(100,3,0,.10,createDate)
+CF0, T0 = cbond.new(100,12,0,.10,createDate)
 Y0 = np.array([.06])
 bond = { "interestrate" : Y0,
          "createdate" : pf.date_to_day(createDate),
@@ -116,12 +116,61 @@ def bonder(bC):
 portfolio = bonder(bondConstructor)
 portfolio_df = pd.DataFrame(portfolio)    
 
-newtime = pf.date_to_day(createDate + relativedelta(months=15))
-#newtime = pf.date_to_day(createDate)
-keyport = krd.krdport(portfolio_df,newtime)
+#newtime = pf.date_to_day(createDate + relativedelta(months=15))
+newtime = pf.date_to_day(createDate)
+keyport = krd.krdport(portfolio_df,newtime,mode='cont')
 
 print "KRD of portfolio with 1-5 year bonds (1 year durations & full duration)"
 print keyport[0];  print np.sum(keyport[0]); 
 print "Present value: ";  print keyport[1]; print np.sum(keyport[1]);  print ' '
 
+#%%
 
+# [5] Instantaneous Returns
+#     Shocking the yield curve
+Yold = np.array([.05,.055,.0575,.059,.06])
+Ynew = np.array([.055,.057,.0575,.058,.058])
+
+def iret(T,CF,Yold,Ynew,mode):
+    # Instantaneous return dP/P
+    R = (pf.pval(T,CF,Ynew,mode) - pf.pval(T,CF,Yold,mode))/pf.pval(T,CF,Yold,mode)
+    return R
+    
+T = np.array([[1, 0, 0, 0, 0],
+              [1, 2, 0, 0, 0],
+              [1, 2, 3, 0, 0],
+              [1, 2, 3, 4, 0],
+              [1, 2, 3, 4, 5]])
+CF = np.array([[1100, 0, 0, 0, 0],
+               [100, 1100, 0, 0, 0],
+               [100, 100, 1100, 0, 0],
+               [100, 100, 100, 1100, 0],
+               [100, 100, 100, 100, 1100]])
+
+
+
+def myinstantrun(T,CF,Yold,Ynew,mode):
+    R = [];  D = np.append(T,CF,1)
+    for d in D:
+        R = np.append(R,iret(d[0:5],d[5:],Yold,Ynew,mode))
+    return R
+    
+    
+R = myinstantrun(T,CF,Yold,Ynew,'cont')
+for r in R:
+    print "Bond: {0:.3f}%".format(100*r)
+    
+    
+# Weighting the bonds invested in...
+ladder = np.array([0.2, 0.2, 0.2, 0.2, 0.2])
+barbell = np.array([0.479, 0, 0, 0, 0.521])
+bullet = np.array([0, 0.521, 0, 0.479, 0])
+
+portfolio_ladderR = np.sum(ladder*R)
+print "Ladder: {0:.3f}%".format(100*portfolio_ladderR)
+
+portfolio_barbellR = np.sum(barbell*R)
+print "Barbell: {0:.3f}%".format(100*portfolio_barbellR)
+
+portfolio_bulletR = np.sum(bullet*R)
+print "Bullet: {0:.3f}%".format(100*portfolio_bulletR)

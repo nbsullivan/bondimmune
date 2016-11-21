@@ -15,7 +15,6 @@
 import numpy as np                               # MATLAB-style functions
 
 
-
 def krdprepare(bond,currentTime,keyrates,mode='disc'):
     # Prepares bond-position object for use with krd functions.
     #  Will also be used to control keyrates for mismatched.
@@ -83,7 +82,7 @@ def pvalcf(T,CF,Y,mode='disc',indiv=False):
 #######################################1#######################################
 
 
-def krdport(portfolio,currentTime=None,keyrates='default'):
+def krdport(portfolio,currentTime=None,keyrates='default',mode='disc'):
 #   Computes key rate duration of portfolio. Requires input bonds to have same 
 #    payment length (i.e., padding with zeros). This requirement will be
 #    handled by krdprepare.py
@@ -93,9 +92,9 @@ def krdport(portfolio,currentTime=None,keyrates='default'):
     W = []
     P = []
     for bond in BONDS:
-        KRD = np.append(KRD,krdbond(bond,currentTime)[0]);  
+        KRD = np.append(KRD,krdbond(bond,currentTime,mode=mode)[0]);  
         W = np.append(W,bond["weight"])
-        P = np.append(P,krdbond(bond,currentTime)[1])
+        P = np.append(P,krdbond(bond,currentTime,mode=mode)[1])
     KRD = KRD.reshape(b,len(KRD)/b)
     S = W*np.transpose(KRD)
     KRDport = np.sum(S,1)
