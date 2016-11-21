@@ -16,7 +16,7 @@ cbond = pf.cBond()
 # [1] Single 1-coupon bond present value and key rate durations
 dt_str = '1/1/2012'
 createDate = datetime.datetime.strptime(dt_str, "%m/%d/%Y").date()
-CF0, T0 = cbond.new(100,5,0,.10,createDate)
+CF0, T0 = cbond.new(100,3,0,.10,createDate)
 Y0 = np.array([.06])
 bond = { "interestrate" : Y0,
          "createdate" : pf.date_to_day(createDate),
@@ -25,7 +25,7 @@ bond = { "interestrate" : Y0,
 keybond0 = krd.krdbond(bond)
   
 print "KRD of 0-coupon bond";  print np.sum(keybond0[0]); 
-print "Present value: ";  print keybond0[1];  print ' '
+print "Present value: ";  print np.sum(keybond0[1]);  print ' '
 
 
 #%%

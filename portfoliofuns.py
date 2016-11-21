@@ -322,9 +322,9 @@ def zero_out(tnow = None, Pc = None):
  
 def pval(T,CF,Y,mode='disc'):
 #   Computes present value of cash flows.
-#    T    Term structure;  vector 1-by-N
+#    T    Term structure;  vector 1-by-N  (years)
 #    CF   Cash flow;       vector 1-by-N
-#    Y    Yield structure; vector 1-by-N
+#    Y    Yield structure; vector 1-by-N  (annual effective rate)
     if mode=='cont':
         s = CF/np.exp(Y*T)
         P = np.sum(s)
@@ -333,6 +333,12 @@ def pval(T,CF,Y,mode='disc'):
         s = CF/((1+Y/n)**(n*T))
         P = np.sum(s)
     return P
+    
+    
+    
+def fval(T,CF,Y,mode='disc'):
+    F = pval(-T,CF,Y,mode)
+    return F
 
 
  

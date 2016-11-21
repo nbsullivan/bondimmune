@@ -40,7 +40,7 @@ def annI(effY,n=365,mode='disc'):
 #######################################0#######################################
 
  # GATEWAY FUNCTION   
-def krdbond(bond,currentTime=None,keyrates='default',mode='disc'):
+def krdbond(bond,currentTime=None,keyrates='default',mode='disc',indiv=False):
 #   Computes key rate durations of cash flows.
 #    T    Term structure;  vector 1-by-N
 #    CF   Cash flow;       vector 1-by-N
@@ -48,14 +48,15 @@ def krdbond(bond,currentTime=None,keyrates='default',mode='disc'):
     if currentTime == None:
         currentTime = bond["createdate"]
     T, CF, Y = krdprepare(bond,currentTime,keyrates,mode)    
-    P = pvalcf(T,CF,Y,mode)
+    P = pvalcf(T,CF,Y,mode,indiv=indiv)
+    Psum = np.sum(P)
     if mode=='cont':
-        if P==0:
+        if Psum==0:
             KRD = np.zeros(CF.size)
         else:
             KRD = 1/P * CF*T/np.exp(Y*T)
     elif mode=='disc':
-        if P==0:
+        if Psum==0:
             KRD = np.zeros(CF.size)
         else:
             n = 365
@@ -64,18 +65,20 @@ def krdbond(bond,currentTime=None,keyrates='default',mode='disc'):
 
     
      
-def pvalcf(T,CF,Y,mode='disc'):
+def pvalcf(T,CF,Y,mode='disc',indiv=False):
 #   Computes present value of cash flows.
-#    T    Term structure;  vector 1-by-N
+#    T    Term structure;  vector 1-by-N  (years)
 #    CF   Cash flow;       vector 1-by-N
-#    Y    Yield structure; vector 1-by-N
+#    Y    Yield structure; vector 1-by-N  (annual effective rate)
     if mode=='cont':
         s = CF/np.exp(Y*T)
-        P = np.sum(s)
     elif mode=='disc':
         n = 365
         s = CF/((1+Y/n)**(n*T))
+    if indiv==False:
         P = np.sum(s)
+    elif indiv==True:
+        P = s
     return P
 #######################################1#######################################
 
