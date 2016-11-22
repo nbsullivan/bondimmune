@@ -174,3 +174,37 @@ print "Barbell: {0:.3f}%".format(100*portfolio_barbellR)
 
 portfolio_bulletR = np.sum(bullet*R)
 print "Bullet: {0:.3f}%".format(100*portfolio_bulletR)
+
+
+#%%
+
+# [6] Key Rate Immunization (based on [4])
+bond1 = portfolio[0];    bond2 = portfolio[1];    bond3 = portfolio[2]
+bond4 = portfolio[3];    bond5 = portfolio[4];
+bond6 = { "interestrate" : np.array([0.05, 0.055, 0.0575, 0.059, 0.06]),
+         "createdate" : 18261,
+         "coupondates" : np.array([18261, 18261, 18261, 18261, 20088]),
+         "couponpayments" : np.array([0, 0, 0, 0, 1000])} 
+
+KRD1 = krd.krdbond(bond1,mode='cont')[0]
+KRD2 = krd.krdbond(bond2,mode='cont')[0]
+KRD3 = krd.krdbond(bond3,mode='cont')[0]
+KRD4 = krd.krdbond(bond4,mode='cont')[0]
+KRD5 = krd.krdbond(bond5,mode='cont')[0]
+KRD6 = krd.krdbond(bond6,mode='cont')[0]
+
+# Form KRD matrix
+K = []
+K = np.append(K,[KRD1, KRD2, KRD3, KRD4, KRD5, KRD6])
+K = K.reshape(6,len(K)/6);  K = K.T
+K = np.concatenate((K,np.array([[1, 1, 1, 1, 1, 1]])),axis=0)
+
+h = 4                                                # planning horizon (years)
+DUR = np.array([0,0,0,4,0,1])
+DUR = DUR.reshape(6,1)
+
+# Solve for proportions of investments
+# VERY BAD CONDITION NUMBER! Requires pseudo-inverse
+# Unstable solution! Depends on day calculation, compounding, days per year...
+p = np.linalg.lstsq(K,DUR)
+
