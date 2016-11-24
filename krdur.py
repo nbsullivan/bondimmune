@@ -13,6 +13,8 @@
 
 
 import numpy as np                               # MATLAB-style functions
+from datetime import date
+from dateutil.relativedelta import relativedelta
 
 
 def krdprepare(bond,currentTime,keyrates,mode='disc'):
@@ -20,8 +22,12 @@ def krdprepare(bond,currentTime,keyrates,mode='disc'):
     #  Will also be used to control keyrates for mismatched.
     if keyrates=='default':
         CF = bond["couponpayments"];    c0 = CF.size
-        T = (1./365)* (bond["coupondates"] - currentTime)
-        Y = annI(bond["interestrate"],mode=mode)
+        M = np.array([relativedelta(cdate,currentTime).months 
+                      for cdate in bond["coupondates"]])
+        YM = 12*np.array([relativedelta(cdate,currentTime).years 
+                      for cdate in bond["coupondates"]])
+        T = YM + M
+        Y = effI(bond["interestrate"],mode=mode)
         if type(Y)==float or Y.size==1:
             Y = Y * np.ones(c0)            
         CF[T<=0] = 0;
@@ -29,13 +35,13 @@ def krdprepare(bond,currentTime,keyrates,mode='disc'):
    
     
     
-def annI(effY,n=365,mode='disc'):
-    # !! KRD computation requires annualized effective rates.
+def effI(annY,n=12,mode='disc'):
+    # Input interest per annum, output nominal per annum
     if mode=='disc':
-        annY = n*((1+effY)**(1./n) - 1)
+        effmY = ((1+annY)**(1./n) - 1)
     elif mode=='cont':
-        annY = effY
-    return annY
+        effmY = annY
+    return effmY
 #######################################0#######################################
 
  # GATEWAY FUNCTION   
@@ -58,22 +64,21 @@ def krdbond(bond,currentTime=None,keyrates='default',mode='disc',indiv=False):
         if Psum==0:
             KRD = np.zeros(CF.size)
         else:
-            n = 365
-            KRD = 1/P * CF*T/((1+Y/n)**(n*T+1))
+            KRD = 1/P * CF*T/((1+Y)**(T+1))
+    KRD = KRD/12                                             # report in years
     return KRD,P
 
     
      
 def pvalcf(T,CF,Y,mode='disc',indiv=False):
 #   Computes present value of cash flows.
-#    T    Term structure;  vector 1-by-N  (years)
+#    T    Term structure;  vector 1-by-N  (months)
 #    CF   Cash flow;       vector 1-by-N
-#    Y    Yield structure; vector 1-by-N  (annual effective rate)
+#    Y    Yield structure; vector 1-by-N  (monthly effective rate)
     if mode=='cont':
         s = CF/np.exp(Y*T)
     elif mode=='disc':
-        n = 365
-        s = CF/((1+Y/n)**(n*T))
+        s = CF/((1+Y)**T)
     if indiv==False:
         P = np.sum(s)
     elif indiv==True:
