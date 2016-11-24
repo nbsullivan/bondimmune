@@ -348,6 +348,7 @@ class cBond:
     #   Constructs coupon bond at monthly scale. Assuming equally spaced 
     #    payments. Also assuming annualCouponNum is a factor of 12 and that 
     #    matMonths is a multiple of this factor.
+    #   Returns T with date objects
     #
     #    faceValue         Face value of bond;  scalar
     #    matMonths         Months to maturity;   scalar
@@ -356,7 +357,7 @@ class cBond:
     #    createDate        Date bond was created (i.e., day 0)
         if annualCouponNum == 0:
             C = np.array([faceValue])
-            T = np.array([date_to_day(createDate+relativedelta(months=matMonths))])
+            T = [createDate+relativedelta(months=matMonths)]
         else:
             if 12 % annualCouponNum != 0:
                 raise RuntimeError('annualCouponNum must be a factor of 12')    
@@ -366,10 +367,10 @@ class cBond:
             n = matMonths/k                                    # number of payments
             cc = couponRate * faceValue       
             C = np.zeros(n)    
-            T = np.zeros(n)
+            T = []
             for i in range(n):
                 C[i] = cc;   
-                T[i] = date_to_day(createDate+relativedelta(months=(i+1)*k))
+                T.append(createDate+relativedelta(months=(i+1)*k))
                 if i==n-1:
                     C[i] += faceValue 
         return C, T
