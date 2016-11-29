@@ -22,6 +22,7 @@ Duration_L = np.zeros(N)
 
 [Portfolio_A, Type, Coupons_per_year] = im.my_portfolio_generator(N,max_months)
 
+
 #%% Getting the monthly interest rate data
 
 startdate = '3/1/2006'
@@ -35,7 +36,10 @@ dates = pd.date_range(startdate, enddate, freq = 'BMS')
 date_strings = pd.Series(dates.format())
 I = Data.ix[date_strings]
 
+
+# generating list of dates at beigings of months
 for x in np.arange(np.size(dates)):
+
     d = pd.Series(dates.format())
     if np.isnan(I.ix[d.ix[x]].ix[0]):
         new_index = pd.date_range(dates[x] + timedelta(1), dates[x] + timedelta(1))
@@ -45,22 +49,35 @@ for x in np.arange(np.size(dates)):
             new_string = '2010-01-04'
         if (new_string == '2016-01-02'):
             new_string = '2016-01-04'
+
         I.ix[d.ix[x]] = Data.ix[new_string]
         I.T.columns.values[x] = new_string
+     
 I = I/100
 monthly_rates = im.my_monthly_effective_rate(I)
 
 #%% Creating liabilities and computing transaction costs for FIRST MONTH ONLY
 
+# alpha risk tolarance
 alpha = 0.5
+
+# sorta randomized transaction costs
 transaction_cost = np.random.uniform(0.01, 0.05)
-print('Transaction Percentage: ', 100*transaction_cost, '%')
+
+print 'Transaction Percentage: ', 100*transaction_cost, '%'
+
+# gamma something to do with risk tolarance
 gamma = np.exp(alpha - 1)
 Transaction = np.zeros(max_months)
+
+# number of months worth of data to use for vasicek model
 considered = 36
 
+# begiing of the major loop only working for the first month
 
 for x in np.array([0]):
+
+
     transaction = np.zeros(N)
     for y in np.arange(N):
         if Type[y] == 1:
@@ -68,6 +85,7 @@ for x in np.array([0]):
         pt = possible_types.copy()
         choice = pt[possible_types < Type[y]][-1]
         
+        # generating libaiblilty portfolio
         liability_interest = im.my_extract_rates(I,choice)
         LI = liability_interest[considered-1]
         LI = im.my_monthly_effective_rate(LI)
@@ -79,21 +97,31 @@ for x in np.array([0]):
         asset_rate = im.my_extract_rates(monthly_rates, Type[y])
         asset_rate = asset_rate[considered-1]
         
+        # getting durations for each position, assests and liabilities
         macD_A = im.my_macD(Portfolio_A[y],asset_rate)
         macD_A = 12*macD_A
         macD_L = im.my_macD(Portfolio_L[y], LI)
         macD_L = 12*macD_L
+
+        # present values
         PVA = im.my_present_value(Portfolio_A[y], asset_rate)
         PVL = im.my_present_value(Portfolio_L[y], LI)
-        
+
+        # computing N as a vector which will be over written
         Liability_number[y] = (macD_A*PVA/(1+asset_rate))/(macD_L*PVL/(1+LI))
+
+        # see macdonalds book, net is generating a tranasction cost
         net = PVA - Liability_number[y]*PVL
+
+        # aqquring libabilites generates transaction costs
         acquisition = Liability_number[y]*PVL
         
+        # cost associated with yth bond 
         transaction[y] = transaction_cost*(net + acquisition)
+    # total transaction cost for porfolio at Xth month.
     Transaction[x] = np.sum(transaction)
 
-print(Transaction[0])
+print Transaction
         
         
         
