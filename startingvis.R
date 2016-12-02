@@ -1,5 +1,5 @@
 library(ggplot2)
-
+library(reshape)
 # change working directory to your data file path.
 setwd('/Users/nick/Documents/math503/project2/bondimmune')
 
@@ -11,9 +11,21 @@ cleaned_df <- read.csv('cleaned_data.csv')
 trimmed_df$date <- as.Date(trimmed_df$date)
 cleaned_df$date <- as.Date(cleaned_df$date)
 
-ggplot(data = trimmed_df, aes(x = date)) +
-  geom_line(aes(y = X1.month)) +
-  geom_line(aes(y = X3.month)) +
-  
-  
-  geom_line(aes(y = X3.month)) +
+# also get better names
+newCnames <- c('X1.month' = 'month1', 'X3.month' = 'month3', 'X6.month' = 'month6', 'X1.year' = 'year1',
+               'X2.year' = 'year2', 'X3.year' = 'year3', 'X5.year' = 'year5', 'X7.year' = 'year7',
+               'X10.year' = 'year10','X20.year' = 'year20','X30.year' = 'year30')
+trimmed_df <- rename(trimmed_df, newCnames)
+cleaned_df <- rename(cleaned_df, newCnames)
+
+clean_rshp <- melt(cleaned_df, id = c ('daynumber', 'date'))
+
+
+ggplot(data = trimmed_df, aes(x = date, y = year1)) +
+  geom_line() +
+  xlab('Date') +
+  ylab('Interest Rate') +
+  ggtitle('Interest Rates of 1 year bonds')
+
+ggsave('1yearbondrates.pdf')
+e

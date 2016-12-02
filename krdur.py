@@ -21,7 +21,7 @@ def krdprepare(bond,currentTime,keyrates,mode='disc'):
     # Prepares bond-position object for use with krd functions.
     #  Will also be used to control keyrates for mismatched.
     if keyrates=='default':
-        CF = bond["couponpayments"];    c0 = CF.size
+        CF = np.copy(bond["couponpayments"]);    c0 = CF.size
         M = np.array([relativedelta(cdate,currentTime).months 
                       for cdate in bond["coupondates"]])
         YM = 12*np.array([relativedelta(cdate,currentTime).years 
