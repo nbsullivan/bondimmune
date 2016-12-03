@@ -45,24 +45,23 @@ def effI(annY,n=12,mode='disc'):
 #######################################0#######################################
 
  # GATEWAY FUNCTION   
-def krdbond(bond,currentTime=None,keyrates='default',mode='disc',indiv=False):
+def krdbond(bond,Y,keyrates='default',mode='disc',indiv=False):
 #   Computes key rate durations of cash flows.
 #    T    Term structure;  vector 1-by-N
 #    CF   Cash flow;       vector 1-by-N
 #    Y    Yield structure; vector 1-by-N
-    if currentTime == None:
-        currentTime = bond["createdate"]
-    T, CF, Y = krdprepare(bond,currentTime,keyrates,mode)    
+    CF = bond;   c = CF.size;
+    T = np.arange(c)+1;
     P = pvalcf(T,CF,Y,mode,indiv=indiv)
     Psum = np.sum(P)
     if mode=='cont':
         if Psum==0:
-            KRD = np.zeros(CF.size)
+            KRD = np.zeros(c)
         else:
             KRD = 1/P * CF*T/np.exp(Y*T)
     elif mode=='disc':
         if Psum==0:
-            KRD = np.zeros(CF.size)
+            KRD = np.zeros(c)
         else:
             KRD = 1/P * CF*T/((1+Y)**(T+1))
     KRD = KRD/12                                             # report in years

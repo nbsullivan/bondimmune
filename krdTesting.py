@@ -2,33 +2,94 @@ import numpy as np
 import pandas as pd
 import datetime
 from dateutil.relativedelta import relativedelta
+from datetime import timedelta
 import krdur as krd
 import portfoliofuns as pf
-
+import my_immunization as im
 
 # TODO: Solve mismatched case
 
 
-# Coupon bond class object
-cbond = pf.cBond()
+#%% [0] Load and prepare interest rate data.
+startdate = '3/1/2006'
+enddate = '2/1/2016'
+Data = pd.read_csv("trimmed_data.csv")
+Data = Data.as_matrix()
+Data = Data[148:, 2:11]
+Data = pd.DataFrame(Data[:,1:], index = Data[:,0], columns = ['1.0', '3.0', '6.0',
+                    '12.0', '24.0', '36.0', '60.0', '84.0'])
+dates = pd.date_range(startdate, enddate, freq = 'BMS')
+date_strings = pd.Series(dates.format())
+I = Data.ix[date_strings]
 
 
-# [1] Single 1-coupon bond present value and key rate durations
-dt_str = '1/1/2012'
-createDate = datetime.datetime.strptime(dt_str, "%m/%d/%Y").date()
-CF0, T0 = cbond.new(100,12,4,.10,createDate)
-Y0 = np.array([.06])
-bond = { "interestrate" : Y0,
-         "createdate" : createDate,
-         "coupondates" : T0,
-         "couponpayments" : CF0} 
-keybond0 = krd.krdbond(bond)
+# generating list of dates at beigings of months, cleans NaNs
+for x in np.arange(np.size(dates)):
+
+    d = pd.Series(dates.format())      # (!) inefficient declare outside loop
+    if np.isnan(I.ix[d.ix[x]].ix[0]):
+        new_index = pd.date_range(dates[x] + timedelta(1), dates[x] + timedelta(1))
+        new_string = pd.Series(new_index.format())
+        new_string = new_string[0]
+        if (new_string == '2010-01-02'):
+            new_string = '2010-01-04'
+        if (new_string == '2016-01-02'):
+            new_string = '2016-01-04'
+
+        I.ix[d.ix[x]] = Data.ix[new_string]
+        I.T.columns.values[x] = new_string
+     
+I = I/100
+monthly_rates = im.my_monthly_effective_rate(I)
+
+
+
+#%% [00] Create a portfolio as in bond_project.py and extract one bond
+possibleTypes = np.array([1.0, 3.0, 6.0, 12.0, 24.0, 36.0, 60.0, 84.0])
+possibleCPY = np.array([1, 3, 4, 6, 12])
+
+maxMonths = 84
+numBonds = np.random.randint(20, 51)
+
+L_portfolio = np.zeros((numBonds,maxMonths))
+L_number = np.zeros(numBonds)
+L_duration = np.zeros(numBonds)
+
+[A_portfolio, Type, CPY] = im.my_portfolio_generator(numBonds,maxMonths)
+
+bond = A_portfolio[0]
+bond_type = Type[0]
+bond_CPY = CPY[0]
+
+
+
+#%% [1] Find present value and key rate duration of bond.
+considered = 36
+S0 = monthly_rates.ix[considered-1]                 # schedule at considered
+U0 = [float(S0.index[i]) for i in range(S0.size)]   # extract terms
+V0 = [float(S0.values[i]) for i in range(S0.size)]  # extract rates
+X0 = np.arange(1,bond.size+1)                       # interpolated terms
+Y0 = np.interp(X0,U0,V0)                            # interpolated rates
+
+keybond0 = krd.krdbond(bond,Y0)
+
+asset_rate = im.my_extract_rates(monthly_rates, Type[0])
+asset_rate = asset_rate[considered-1] 
+pval = im.my_present_value(bond,asset_rate)
+macD = im.my_macD(bond,asset_rate)
   
-print "KRD of 0-coupon bond";  print np.sum(keybond0[0]); 
-print "Present value: ";  print np.sum(keybond0[1]);  print ' '
+print "Key rate durations (KRD):"      ;  print keybond0[0]
+print "Present value (KRD): "          ;  print np.sum(keybond0[1])
+print "Macaulay duration (my): "       ;  print macD
+print "Modified duration (my): "       ;  print macD/(1+asset_rate)
+print "Present value (my): "           ;  print pval               ;  print ' '
 
 
-#%%
+#%%  CAUTION YOU ARE ENTERING THE TWILIGHT ZONE CODE BELOW HAS NOT BEEN REVISED
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # [2] Test Case by Nathan
 dt_str = '1/1/2016'
@@ -200,14 +261,17 @@ KRD6 = krd.krdbond(bond6,mode='cont')[0]
 K = []
 K = np.append(K,[KRD1, KRD2, KRD3, KRD4, KRD5, KRD6])
 K = K.reshape(6,len(K)/6);  K = K.T
-K = np.concatenate((K,np.array([[1, 1, 1, 1, 1, 1]])),axis=0)
+#K = np.concatenate((K,np.array([[1, 1, 1, 1, 1, 1]])),axis=0)
 
 h = 4                                                # planning horizon (years)
-DUR = np.array([0,0,0,4,0,1])
-DUR = DUR.reshape(6,1)
+DUR = np.array([0,0,0,4,0])
+DUR = DUR.reshape(5,1)
 
 # Solve for proportions of investments
 # VERY BAD CONDITION NUMBER! Requires pseudo-inverse
 # Unstable solution! Depends on day calculation, compounding, days per year...
 p = np.linalg.lstsq(K,DUR)
+r = np.linalg.matrix_rank(K)
+
+print r
 

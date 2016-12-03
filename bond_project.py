@@ -37,10 +37,10 @@ date_strings = pd.Series(dates.format())
 I = Data.ix[date_strings]
 
 
-# generating list of dates at beigings of months
+# generating list of dates at beigings of months, cleans NaNs
 for x in np.arange(np.size(dates)):
 
-    d = pd.Series(dates.format())
+    d = pd.Series(dates.format())      # (!) inefficient declare outside loop
     if np.isnan(I.ix[d.ix[x]].ix[0]):
         new_index = pd.date_range(dates[x] + timedelta(1), dates[x] + timedelta(1))
         new_string = pd.Series(new_index.format())
@@ -68,7 +68,7 @@ print 'Transaction Percentage: ', 100*transaction_cost, '%'
 
 # gamma something to do with risk tolarance
 gamma = np.exp(alpha - 1)
-Transaction = np.zeros(max_months)
+Transaction = np.zeros(max_months)           # cost of portfolio over all time
 
 # number of months worth of data to use for vasicek model
 considered = 36
@@ -78,30 +78,30 @@ considered = 36
 for x in np.array([0]):
 
 
-    transaction = np.zeros(N)
+    transaction = np.zeros(N)               # cost of portfolio for this month
     for y in np.arange(N):
-        if Type[y] == 1:
+        if Type[y] == 1:             # if bond expires in one month, ignore it
             continue
         pt = possible_types.copy()
-        choice = pt[possible_types < Type[y]][-1]
+        choice = pt[possible_types < Type[y]][-1]   # liability bond will be one less type than asset
         
         # generating libaiblilty portfolio
-        liability_interest = im.my_extract_rates(I,choice)
-        LI = liability_interest[considered-1]
-        LI = im.my_monthly_effective_rate(LI)
-        li = np.random.uniform(0.01, 0.1)
-        cr = coupon_rate[coupon_rate <= choice]
-        ncp = cr[np.random.randint(np.size(cr))]
+        liability_interest = im.my_extract_rates(I,choice)  # extract historical annual interest rate over all time for liability type
+        LI = liability_interest[considered-1]    # pick the last known interest rate within the interval [startdate,startdate+considered]
+        LI = im.my_monthly_effective_rate(LI)    # convert to monthly
+        li = np.random.uniform(0.01, 0.1)        # random coupon percent value
+        cr = coupon_rate[coupon_rate <= choice]  # possible coupon per year schedules
+        ncp = cr[np.random.randint(np.size(cr))] # pick one of them
         Portfolio_L[y] = im.my_bond_generator(max_months, choice, 1, li, ncp)
         
-        asset_rate = im.my_extract_rates(monthly_rates, Type[y])
-        asset_rate = asset_rate[considered-1]
+        asset_rate = im.my_extract_rates(monthly_rates, Type[y])  # extract historical monthly interest rate over all time for asset type
+        asset_rate = asset_rate[considered-1]    # pick the last known interest rate within the interval [startdate,startdate+considered]
         
         # getting durations for each position, assests and liabilities
-        macD_A = im.my_macD(Portfolio_A[y],asset_rate)
-        macD_A = 12*macD_A
-        macD_L = im.my_macD(Portfolio_L[y], LI)
-        macD_L = 12*macD_L
+        macD_A = im.my_macD(Portfolio_A[y],asset_rate)   # duration in years
+        macD_A = 12*macD_A                               # duration in months
+        macD_L = im.my_macD(Portfolio_L[y], LI)          # duration in years
+        macD_L = 12*macD_L                               # duration in months
 
         # present values
         PVA = im.my_present_value(Portfolio_A[y], asset_rate)
@@ -114,7 +114,7 @@ for x in np.array([0]):
         net = PVA - Liability_number[y]*PVL
 
         # aqquring libabilites generates transaction costs
-        acquisition = Liability_number[y]*PVL
+        acquisition = Liability_number[y]*PVL    # (!) inefficient, compute prior to net
         
         # cost associated with yth bond 
         transaction[y] = transaction_cost*(net + acquisition)
