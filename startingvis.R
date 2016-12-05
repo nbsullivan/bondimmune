@@ -38,4 +38,26 @@ ggsave('1yearbondrates.pdf')
 ## anthonys yeild curve request.
 
 rates <- c(	0.19,	0.28,	0.38,	0.5,	0.67,	0.76,	1.03,	1.29,	1.46,	1.78,	2.18)
-maturities <- c()
+maturities <- c( 1, 3, 6, 12, 24, 36, 60, 84, 120, 240, 360)
+bondtype <- c(1:11)
+ag_df <- data.frame(rates, maturities, bondtype)
+
+ggplot(data = ag_df, aes(x = maturities, y = rates)) +
+  geom_line() +
+  geom_point() +
+  ylab('Interest Rate (%)') +
+  xlab('Maturity (Months)') +
+  ggtitle('Yield curve for 7/29/2016')
+
+ggsave('ag_yield_curve.pdf')
+
+
+ggplot(data = ag_df, aes(x = bondtype, y = rates)) +
+  geom_line() +
+  geom_point() +
+  scale_x_discrete(name ="Maturity (Months)", 
+                   limits=c('1', '3', '6', '12','24','36','60','84','120','240','360' )) +
+  ylab('Interest Rate (%)') +
+  ggtitle('Yield curve for 7/29/2016')
+
+ggsave('ag_yield_curve_alt.pdf')
