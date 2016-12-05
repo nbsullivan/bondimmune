@@ -32,3 +32,10 @@ ggplot(data = reduced_df, aes(x = date, y = year1)) +
   ggtitle('Interest Rates of 1 year bonds')
 
 ggsave('1yearbondrates.pdf')
+
+
+
+## anthonys yeild curve request.
+
+rates <- c(	0.19,	0.28,	0.38,	0.5,	0.67,	0.76,	1.03,	1.29,	1.46,	1.78,	2.18)
+maturities <- c()
