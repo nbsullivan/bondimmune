@@ -6,6 +6,7 @@ from datetime import timedelta
 import krdur as krd
 import portfoliofuns as pf
 import my_immunization as im
+import scipy as sp
 
 # TODO: Solve mismatched case
 
@@ -57,34 +58,177 @@ L_duration = np.zeros(numBonds)
 
 [A_portfolio, Type, CPY] = im.my_portfolio_generator(numBonds,maxMonths)
 
-bond = A_portfolio[0]
+bond_CF = A_portfolio[0]
 bond_type = Type[0]
 bond_CPY = CPY[0]
 
 
 
-#%% [1] Find present value and key rate duration of bond.
+#%% [1] Find present value and key rate duration of bond (all calendar terms).
 considered = 36
 S0 = monthly_rates.ix[considered-1]                 # schedule at considered
 U0 = [float(S0.index[i]) for i in range(S0.size)]   # extract terms
 V0 = [float(S0.values[i]) for i in range(S0.size)]  # extract rates
-X0 = np.arange(1,bond.size+1)                       # interpolated terms
+X0 = np.arange(1,bond_CF.size+1)                    # interpolated terms
 Y0 = np.interp(X0,U0,V0)                            # interpolated rates
 
-keybond0 = krd.krdbond(bond,Y0)
+KRDbond,KRDpval = krd.bond(bond_CF,Y0)
 
 asset_rate = im.my_extract_rates(monthly_rates, Type[0])
 asset_rate = asset_rate[considered-1] 
-pval = im.my_present_value(bond,asset_rate)
-macD = im.my_macD(bond,asset_rate)
+pval = im.my_present_value(bond_CF,asset_rate)
+macD = im.my_macD(bond_CF,asset_rate)
   
-print "Key rate durations (KRD):"      ;  print keybond0[0]
-print "Present value (KRD): "          ;  print np.sum(keybond0[1])
+print "Key rate durations (KRD):"      ;  print KRDbond
+print "Sum of krd: "                   ;  print np.sum(KRDbond)
+print "Present value (KRD): "          ;  print KRDpval
 print "Macaulay duration (my): "       ;  print macD
 print "Modified duration (my): "       ;  print macD/(1+asset_rate)
 print "Present value (my): "           ;  print pval               ;  print ' '
 
 
+
+#%% [2] Find present value and key rate duration of portfolio (all calendar terms).
+Q = np.ones(A_portfolio.size/84)
+KRDportfolio,KRDpvalportfolio = krd.portfolio(A_portfolio,Y0,Q)
+
+print "Key rate duration of portfolio:"    ; print KRDportfolio
+print "Present value of portfolio (KRD):"  ; print KRDpvalportfolio
+
+
+
+#%% [3] Interpolation of key rates
+T = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+K = np.array([1, 3, 6, 12, 24, 36, 60, 84])
+DK = krd.dkinterp(T,K)                # DK[j] extracts the partial y(tk)/partial y(ks) solutions
+                                      #       for all k
+
+                                      
+#%% [4] Advanced testing
+P = A_portfolio
+s = np.size(P[0])
+T = np.arange(s)+1
+
+# Compute chain rule KRDs (sum of KRD_P should equal sum of KRDportfolio... and it does!)
+DPDY = krd.dPdY(T,P,Y0,Q)
+DPDY = np.sum(DPDY, 1)
+DK = krd.dkinterp(T,K)
+
+dVdYk = np.dot(DK,DPDY)
+KRD_P = (1./KRDpvalportfolio)*dVdYk
+mTy = (1./12)
+KRD_P = mTy*KRD_P           
+
+
+#%% [5] Generating liabilities
+N = 8;  max_months = 84;
+
+
+possible_duration = np.array([1, 3, 6, 12, 24, 36, 60, 84, 84])
+coupon_rate = np.array([1, 3, 4, 6, 12])
+Coupons_per_year = np.zeros(N)
+Interest = np.zeros(N)
+Pl = np.zeros((N,max_months))
+r = np.arange(N)
+Typel = np.zeros(N)
+    
+for x in r:
+    i = np.random.uniform(0.01, 0.1)
+    Interest[x] = i
+    possible_duration = possible_duration[possible_duration <= max_months]
+    tipe = possible_duration[x]
+    Typel[x] = tipe
+    cr = coupon_rate[coupon_rate <= tipe]
+    ncp = cr[np.random.randint(np.size(cr))] # calculate the number of
+                                                 # coupon payments in a year
+    Coupons_per_year[x] = ncp
+    Pl[x] = im.my_bond_generator(max_months, tipe, 1, i, ncp)
+    
+    
+L_portfolio = Pl
+L_Type = Typel
+L_CPY = Coupons_per_year
+
+
+#%% [6] Solving System
+QL = np.ones(N)
+KRDLportfolio,KRDLpvalportfolio = krd.portfolio(L_portfolio,Y0,QL)
+
+DPDY = krd.dPdY(T,L_portfolio,Y0,QL)
+DK = krd.dkinterp(T,K)
+
+dVdYk = np.dot(DK,DPDY)
+KRD_PL = (1./KRDLpvalportfolio)*dVdYk
+mTy = (1./12)
+KRD_PL = mTy*KRD_PL          
+
+
+
+K = KRD_PL
+
+M = np.vstack((K,np.ones(N)))
+b = np.append(KRD_P,1)
+w_nnls,w_nnls_res = sp.optimize.nnls(M,b)
+
+# w_try = np.linalg.solve(M,b)
+
+MM = K
+bb = KRD_P
+w = np.linalg.solve(MM,bb)
+        
+# Seems difficult to get reliable results.... looking into SLSQP
+# Sequential Least Squares Programming:
+    # Method to solve minimization problems subject to equation constraints.
+# https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.optimize.fmin_slsqp.html
+# https://docs.scipy.org/doc/scipy/reference/tutorial/optimize.html#tutorial-sqlsp
+
+
+
+#%%
+
+'''
+for j in range(N):
+    if j == 0:
+        Lj = L_portfolio[j]
+        
+        DPDY = krd.dPdY(T,Lj,Y0,Q)
+        DK = krd.dkinterp(T,K)
+        dVdYk = np.dot(DK,DPDY)
+        KRD,KRDpval = krd.bond(Lj,Y0)
+        KRD_P = (1./KRDpval)*dVdYk
+        mTy = (1./12)
+        KRD_P = mTy*KRD_P  
+        
+        KRD = np.reshape(np.array(KRD),(len(KRD),1))
+        K = KRD
+    else:
+        Lj = L_portfolio[j]
+        
+        DPDY = krd.dPdY(T,Lj,Y0,Q)
+        DK = krd.dkinterp(T,K)
+        dVdYk = np.dot(DK,DPDY)
+        KRD,KRDpval = krd.bond(Lj,Y0)
+        KRD_P = (1./KRDpval)*dVdYk
+        mTy = (1./12)
+        KRD_P = mTy*KRD_P  
+        
+        KRD = np.reshape(np.array(KRD),(len(KRD),1))
+        K = np.concatenate((K,KRD),1)
+
+MM = K
+bb = KRDportfolio
+w = np.linalg.solve(MM,bb)
+        
+M = np.vstack((K,np.ones(N)))
+b = np.append(KRDportfolio,1)
+w_nnls,w_nnls_res = sp.optimize.nnls(M,b)
+'''    
+
+
+
+
+#%%
+'''
 #%%  CAUTION YOU ARE ENTERING THE TWILIGHT ZONE CODE BELOW HAS NOT BEEN REVISED
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -275,3 +419,4 @@ r = np.linalg.matrix_rank(K)
 
 print r
 
+'''
