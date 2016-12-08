@@ -177,11 +177,56 @@ bb = KRD_P
 w = np.linalg.solve(MM,bb)
         
 # Seems difficult to get reliable results.... looking into SLSQP
+#%%
 # Sequential Least Squares Programming:
     # Method to solve minimization problems subject to equation constraints.
 # https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.optimize.fmin_slsqp.html
 # https://docs.scipy.org/doc/scipy/reference/tutorial/optimize.html#tutorial-sqlsp
+A = K
+b = KRD_P
+def func(x):
+    """ Objective function """
+    return np.linalg.norm(np.dot(A,x)-b, ord=1)
+    
+x0 = (1./N)*np.zeros(N)
 
+'''
+eqcons = [lambda x: np.sum(x)-1]
+ieqcons= [lambda x: x[0],
+          lambda x: x[1],
+          lambda x: x[2],
+          lambda x: x[3],
+          lambda x: x[4],
+          lambda x: x[5],
+          lambda x: x[6],
+          lambda x: x[7]]
+
+def f_ieqcons(x):  
+    return 1.0*x
+    '''
+#,
+          #lambda x: np.sum((x>=0))*(1./x.size)-1]
+
+#res = sp.optimize.fmin_slsqp(func,x0,f_ieqcons=f_ieqcons)
+cons=[]
+steadystate={'type':'eq', 'fun': lambda x: x.sum()-1 }
+cons.append(steadystate)
+'''
+cons.append({'type':'ineq', 'fun': lambda x: x[0]})
+cons.append({'type':'ineq', 'fun': lambda x: x[1]})
+cons.append({'type':'ineq', 'fun': lambda x: x[2]})
+cons.append({'type':'ineq', 'fun': lambda x: x[3]})
+cons.append({'type':'ineq', 'fun': lambda x: x[4]})
+cons.append({'type':'ineq', 'fun': lambda x: x[5]})
+cons.append({'type':'ineq', 'fun': lambda x: x[6]})
+cons.append({'type':'ineq', 'fun': lambda x: x[7]})
+'''
+bons = [(0,1), (0,1), (0,1), (0,1),
+        (0,1), (0,1), (0,1), (0,1)]
+
+
+res = sp.optimize.minimize(func,x0,method='SLSQP',constraints=cons,
+                           bounds=bons,options={'disp': True})
 
 
 #%%
