@@ -167,8 +167,8 @@ KRD_PL = mTy*KRD_PL
 K = KRD_PL
 
 M = np.vstack((K,np.ones(N)))
-b = np.append(KRD_P,1)
-w_nnls,w_nnls_res = sp.optimize.nnls(M,b)
+b_nnls = np.append(KRD_P,1)
+w_nnls,w_nnls_res = sp.optimize.nnls(M,b_nnls)
 
 # w_try = np.linalg.solve(M,b)
 
@@ -187,6 +187,10 @@ b = KRD_P
 def func(x):
     """ Objective function """
     return np.linalg.norm(np.dot(A,x)-b, ord=1)
+    
+def func2(x):
+    """ Objective function """
+    return np.linalg.norm(np.dot(A,x)-b, ord=2)
     
 x0 = (1./N)*np.zeros(N)
 
@@ -227,8 +231,20 @@ bons = [(0,1), (0,1), (0,1), (0,1),
 
 res = sp.optimize.minimize(func,x0,method='SLSQP',constraints=cons,
                            bounds=bons,options={'disp': True})
+res2 = sp.optimize.minimize(func2,x0,method='SLSQP',constraints=cons,
+                           bounds=bons,options={'disp': True})
 
-
+print 'res.x'; print res.x
+print res.x.sum()
+print 'K*res.x'; print np.dot(K,res.x)
+print np.abs(np.dot(K,res.x) - b).sum()
+print ' '
+print 'res2.x'; print res2.x
+print res2.x.sum()
+print 'K*res2.x'; print np.dot(K,res2.x)
+print np.abs(np.dot(K,res2.x) - b).sum()
+print ' '
+print 'b'; print b
 #%%
 
 '''
