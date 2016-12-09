@@ -59,24 +59,50 @@ Sum of Neg Dev:        -0.002                 -0.001             -0.030
 Authors: Anthony Gusman, Nathan Johnson, Nick Sullivan
 """
 
-import pandas as pd
-import numpy as np
-import my_immunization as im
-import portfoliofuns as pf
+import numpy as np                               # MATLAB-style functions
+import scipy as sp
+import pandas as pd                              # Dataframe functions
+from scipy import optimize
 from datetime import timedelta
 
-#%% Generating a random portfolio over a planning horizon of 10 years
 
+import krdur as krd                              # Key rate duration
+import my_immunization as im
+
+
+
+#%% Generating a random portfolio over a planning horizon of 7 years
+"""   We will need three liability portfolios: one for each strategy; updated
+         over time.
+         
+      We will need one asset portfolio: generated at the beginning.
+"""
+
+# Assumptions
 max_months = 84
-N = np.random.randint(20, 51)
 possible_types = np.array([1.0, 3.0, 6.0, 12.0, 24.0, 36.0, 60.0, 84.0])
 coupon_rate = np.array([1, 3, 4, 6, 12])
-Portfolio_L = np.zeros((N,max_months))
-Liability_number = np.zeros(N)
-Duration_L = np.zeros(N)
+keyRates = possible_types
+N = np.random.randint(20, 51)
+Nkrd = len(keyRates)+1;
 
+# Generate static asset portfolio
 [Portfolio_A, Type, Coupons_per_year] = im.my_portfolio_generator(N,max_months)
 
+# Generate dynamic liability portfolios
+"""Previously known as:  Portfolio_L"""
+Lmac_PORT = np.zeros((N,max_months))
+Lmod_PORT = np.zeros((N,max_months))
+Lkrd_PORT = np.zeros((Nkrd,max_months))
+
+"""Previously known as: Liability_number"""
+Lmac_n = np.zeros(N)
+Lmod_n = np.zeros(N)
+Lkrd_n = np.zeros(Nkrd)
+
+Lmac_dur = np.zeros(N)
+Lmod_dur = np.zeros(N)
+Lkrd_dur = np.zeros(Nkrd)
 
 #%% Getting the monthly interest rate data
 
@@ -111,28 +137,30 @@ for x in np.arange(np.size(dates)):
 I = I/100
 monthly_rates = im.my_monthly_effective_rate(I)
 
+
 #%% Creating liabilities and computing transaction costs for FIRST MONTH ONLY
 
-# alpha risk tolarance
-alpha = 0.5
-
-# sorta randomized transaction costs
-transaction_cost = np.random.uniform(0.01, 0.05)
-
+# Transaction Cost Parameters
+alpha = 0.5                                                   # risk tolarance
+transaction_cost = np.random.uniform(0.01, 0.05)              # bounded random
 print 'Transaction Percentage: ', 100*transaction_cost, '%'
 
-# gamma something to do with risk tolarance
-gamma = np.exp(alpha - 1)
-Transaction = np.zeros(max_months)           # cost of portfolio over all time
+gamma = np.exp(alpha - 1)                         # transformed risk tolarance
 
-# number of months worth of data to use for vasicek model
-considered = 36
+"""Previously known as:  Transaction"""
+TCmac = np.zeros(max_months)                # cost of portfolios over all time
+TCmod = np.zeros(max_months)
+TCkrd = np.zeros(max_months)               
 
-# begiing of the major loop only working for the first month
+# Interest Rate History 
+considered = 36     # number of months worth of data to use for vasicek model;
+                    #           also used for KRD interpolated interest rates
 
-for x in np.array([0]):
-
-
+                    
+# Main Loop (only working for the first month)
+"""Plan to use FOR-IN dict of  Portfolio parameters? """
+time = np.array([0])
+for x in time:
     transaction = np.zeros(N)               # cost of portfolio for this month
     for y in np.arange(N):
         if Type[y] == 1:             # if bond expires in one month, ignore it
@@ -140,7 +168,7 @@ for x in np.array([0]):
         pt = possible_types.copy()
         choice = pt[possible_types < Type[y]][-1]   # liability bond will be one less type than asset
         
-        # generating libaiblilty portfolio
+        # generating liability portfolio
         liability_interest = im.my_extract_rates(I,choice)  # extract historical annual interest rate over all time for liability type
         LI = liability_interest[considered-1]    # pick the last known interest rate within the interval [startdate,startdate+considered]
         LI = im.my_monthly_effective_rate(LI)    # convert to monthly

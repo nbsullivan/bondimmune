@@ -275,7 +275,7 @@ def immunize(Pa,Y,Qa,Pl,K,w0='null',r=0.5):
     
     # obtain present values of each liability (ignoring KRDs)
     q = -(1./L)*w*(r*PVa)                      # convert weights to quantities
-    return q, err
+    return q, err, w
         
     
     

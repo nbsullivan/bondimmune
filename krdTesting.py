@@ -140,8 +140,8 @@ PORT_KRD,PORT_PV = krd.portfolio(PORT_assets,Y,Q,K)
 
 
 #%% [5] Creating liability types for KRD solution...
-NL = K.size + 1;                               # same number as key rate durations
-maturities = np.array([1, 3, 6, 12, 24, 36, 60, 84])
+NL = K.size+1;                             # one more than key rate durations
+maturities = np.array([1,3,6,12,24,36,60,84,1,3,6,12,24,36,60,84])
 coupon_rate = np.array([1, 3, 4, 6, 12])
 
 
@@ -178,9 +178,9 @@ def Lgen(N,max_months,possible_duration,coupon_rate):
 
 # immunize(Pa,Y,Qa,Pl,K,w0='null',r=0.5):
 Qa = np.ones(krd.nbonds(PORT_assets))
-N_liabilitiesToShort,err = krd.immunize(PORT_assets,Y,Qa,LPORT_CF,K)
+N2short,err,w = krd.immunize(PORT_assets,Y,Qa,LPORT_CF,K)
 
-print 'Recommended short amounts: ';   print np.negative(N_liabilitiesToShort)
+print 'Recommended short amounts: ';   print np.negative(N2short)
 
 
 
