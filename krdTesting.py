@@ -7,6 +7,7 @@ import krdur as krd
 import portfoliofuns as pf
 import my_immunization as im
 import scipy as sp
+from scipy import optimize
 
 # TODO: Solve mismatched case
 
