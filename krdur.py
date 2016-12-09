@@ -255,7 +255,8 @@ def immunize(Pa,Y,Qa,Pl,K,w0='null',r=0.5):
         Note: q consists of negative values to indicate shorting.
     """
     N = nbonds(Pl)                    # number of bonds in liability portfolio
-        
+    if w0 == 'null':
+        w0 = np.zeros(N)     
     
     KRDa,PVa = portfolio(Pa,Y,Qa,K)                 # obtain key rate and PV's
     
@@ -263,13 +264,13 @@ def immunize(Pa,Y,Qa,Pl,K,w0='null',r=0.5):
     s = tlen(Pl)                                             # length of time
     T = np.arange(s)+1                                      # time-to-cashflow
     L = np.array([bond(Pl[j],Y,K)[1] for j in range(len(w0))])
-    DLDY = dPdY(T,Pl,Y)                         # liability sensitivity matrix                                
-    KRDl = (1./L)*DLDY                    # liability key rate duration matrix
+    DLDY = dPdY(T,Pl,Y)                         # liability sensitivity matrix
+    DK = dkinterp(T,K)
+    dPdYk = np.dot(DK,DLDY)                                
+    KRDl = (1./L)*dPdYk                    # liability key rate duration matrix
     
     A = KRDl                                  # system setup and initilization
-    b = (1/r)*KRDa
-    if w0 == 'null':
-        w0 = np.zeros(N)        
+    b = (1/r)*KRDa       
     w, err = immunize_solve(A,b,w0)                        # solve for weights
     
     # obtain present values of each liability (ignoring KRDs)

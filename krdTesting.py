@@ -97,7 +97,7 @@ L_duration = np.zeros(numBonds)
 
 
 
-#%% [2] Interpolating interest rates for key rate duration calculations
+#%% [2] Interpolating interest rates for key rate duration calculations...
 windowSize = 36
 S = M.ix[windowSize-1]                             # current schedule
 U = [float(S.index[i]) for i in range(S.size)]   # extract terms
@@ -111,7 +111,7 @@ Y = np.interp(X,U,V)                            # interpolated rates
 
 
 
-#%% [3] Find present value and key rate duration of bond.
+#%% [3] Finding present value and key rate duration of bond...
 K = np.array([1, 3, 6, 12, 24, 36, 60, 84])                    # set key rates
 bond_KRD,bond_PV = krd.bond(bond_CF,Y,K)
 
@@ -132,102 +132,58 @@ print "Present value (my): "           ;  print pval               ;  print ' '
 
 
 
-#%% [4] Find present value and key rate duration of portfolio.
+#%% [4] Finding present value and key rate duration of portfolio...
 Q = np.ones(numBonds)
 PORT_KRD,PORT_PV = krd.portfolio(PORT_assets,Y,Q,K)
 
 
 
 
-'''
-
-                                     
-#%% [5] Generating liabilities
-N = 8;  max_months = 84;
-
-
-possible_duration = np.array([1, 3, 6, 12, 24, 36, 60, 84, 84])
+#%% [5] Creating liability types for KRD solution...
+NL = K.size + 1;                               # same number as key rate durations
+maturities = np.array([1, 3, 6, 12, 24, 36, 60, 84])
 coupon_rate = np.array([1, 3, 4, 6, 12])
-Coupons_per_year = np.zeros(N)
-Interest = np.zeros(N)
-Pl = np.zeros((N,max_months))
-r = np.arange(N)
-Typel = np.zeros(N)
+
+
+def Lgen(N,max_months,possible_duration,coupon_rate):
+    Coupons_per_year = np.zeros(N)
+    Interest = np.zeros(N)
+    Pl = np.zeros((N,max_months))
+    r = np.arange(N)
+    Typel = np.zeros(N)
     
-for x in r:
-    i = np.random.uniform(0.01, 0.1)
-    Interest[x] = i
-    possible_duration = possible_duration[possible_duration <= max_months]
-    tipe = possible_duration[x]
-    Typel[x] = tipe
-    cr = coupon_rate[coupon_rate <= tipe]
-    ncp = cr[np.random.randint(np.size(cr))] # calculate the number of
+    for x in r:
+        i = np.random.uniform(0.01, 0.1)
+        Interest[x] = i
+        possible_duration = possible_duration[possible_duration <= max_months]
+        tipe = possible_duration[x]
+        Typel[x] = tipe
+        cr = coupon_rate[coupon_rate <= tipe]
+        ncp = cr[np.random.randint(np.size(cr))] # calculate the number of
                                                  # coupon payments in a year
-    Coupons_per_year[x] = ncp
-    Pl[x] = im.my_bond_generator(max_months, tipe, 1, i, ncp)
+        Coupons_per_year[x] = ncp
+        Pl[x] = im.my_bond_generator(max_months, tipe, 1, i, ncp)
     
     
-L_portfolio = Pl
-L_Type = Typel
-L_CPY = Coupons_per_year
+        L_portfolio = Pl
+        L_Type = Typel
+        L_CPY = Coupons_per_year
+    return L_portfolio, L_Type, L_CPY
 
-
-#%% [6] Solving System
-QL = np.ones(N)
-KRDLportfolio,KRDLpvalportfolio = krd.portfolio(L_portfolio,Y0,QL)
-
-DPDY = krd.dPdY(T,L_portfolio,Y0,QL)
-DK = krd.dkinterp(T,K)
-
-dVdYk = np.dot(DK,DPDY)
-KRD_PL = (1./KRDLpvalportfolio)*dVdYk
-mTy = (1./12)
-KRD_PL = mTy*KRD_PL          
+[LPORT_CF, LPORT_types, LPORT_CPYs] = Lgen(NL,maxMonths,maturities,coupon_rate)
 
 
 
-K = KRD_PL
+#%% [6] Finding immunized position...
 
-M = np.vstack((K,np.ones(N)))
-b_nnls = np.append(KRD_P,1)
-w_nnls,w_nnls_res = sp.optimize.nnls(M,b_nnls)
+# immunize(Pa,Y,Qa,Pl,K,w0='null',r=0.5):
+Qa = np.ones(krd.nbonds(PORT_assets))
+N_liabilitiesToShort,err = krd.immunize(PORT_assets,Y,Qa,LPORT_CF,K)
 
-# w_try = np.linalg.solve(M,b)
-
-MM = K
-bb = KRD_P
-w = np.linalg.solve(MM,bb)
-        
-# Seems difficult to get reliable results.... looking into SLSQP
-#%%
-# Sequential Least Squares Programming:
-    # Method to solve minimization problems subject to equation constraints.
-# https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.optimize.fmin_slsqp.html
-# https://docs.scipy.org/doc/scipy/reference/tutorial/optimize.html#tutorial-sqlsp
-A = K
-b = KRD_P
-def func(x):
-    """ Objective function """
-    return np.linalg.norm(np.dot(A,x)-b, ord=1)
-
-x0 = (1./N)*np.zeros(N)
-
-cons=[]
-steadystate={'type':'eq', 'fun': lambda x: x.sum()-1 }
-cons.append(steadystate)
-
-bons = [(0,1), (0,1), (0,1), (0,1),
-        (0,1), (0,1), (0,1), (0,1)]
+print 'Recommended short amounts: ';   print np.negative(N_liabilitiesToShort)
 
 
-res = sp.optimize.minimize(func,x0,method='SLSQP',constraints=cons,
-                           bounds=bons,options={'disp': True})
 
-print 'res.x'; print res.x
-print res.x.sum()
-print 'K*res.x'; print np.dot(K,res.x)
-print np.abs(np.dot(K,res.x) - b).sum()
-print ' '
-print 'b'; print b
 
-'''
+
+
