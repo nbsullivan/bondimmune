@@ -1,6 +1,61 @@
-# -*- coding: utf-8 -*-
 """
-MATH 503 Project 2 Script
+MATH 503 PROJECT 2 SCRIPT
+     Explore the performance of three immunization methodologies:
+         [1]  Duration-matching via the Macaulay duration
+         [2]  Duration-matching via the modified duration
+         [3]  Key rate duration matching 
+         
+     We will measure the deviation between actual performance and targeted
+      performance. Performance will be measured via:
+         [1]  Actual Value vs. Ideal Value
+         
+         
+         
+         
+              e.g., deviation tables:
+                                           Deviations
+   -----------------------------------------------------------------------
+   Target Value  |  Macaulay Duration  |   Modified Duration   |   KRD   
+   -----------------------------------------------------------------------
+1     1.0085           -0.002                 -0.001             +0.052
+2     1.7731           +0.210                 +0.167             -0.030
+.
+.
+. 
+
+Sum of Abs Dev:         0.212                  0.168              0.082
+Sum of Neg Dev:        -0.002                 -0.001             -0.030   
+
+
+
+
+
+             e.g., relative performance tables:
+                 
+                (percentages)                           
+   ----------------------------------------------------------
+   Strategy |  Sum of Absolute Devs  |   Sum of Negative Devs      
+   ----------------------------------------------------------   
+     Mac           100.0                      100.0
+     Mod           107.0                      103.3
+     KRD            80.4                       97.9  
+     
+   
+         [2]  Transaction Costs  (How much does it cost to actually apply?)
+         
+         
+         
+      Some of the data that will be informative are:
+          [] Plot of each portfolio's value over time; along ideal value
+          [] Monthly transaction costs
+          [] Which assets were selected to be immunized each month
+          
+          
+      Some useful heuristics:
+          [] The present value of a portfolio is the sum of the present values
+              of its constituent bonds.
+         
+         
 Authors: Anthony Gusman, Nathan Johnson, Nick Sullivan
 """
 
