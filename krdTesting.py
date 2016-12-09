@@ -136,6 +136,9 @@ print "Present value (my): "           ;  print pval               ;  print ' '
 Q = np.ones(numBonds)
 PORT_KRD,PORT_PV = krd.portfolio(PORT_assets,Y,Q,K)
 
+
+
+
 '''
 
                                      

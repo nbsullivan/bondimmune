@@ -63,7 +63,7 @@ def dBdY(T,CF,Y,mode='disc'):
     return DBDY
     
      
-def dPdY(T,P,Y,Q):
+def dPdY(T,P,Y):
     """Sensitivity N-by-(# of bonds) matrix of portfolio to risk-free rates; 
          depends on DBDY.
     
@@ -71,21 +71,18 @@ def dPdY(T,P,Y,Q):
         T    Time-to-cashflow ;  vector 1-by-N  (months)
         CF   Cash flow        ;  vector 1-by-N
         Y    Yield structure  ;  vector 1-by-N  (monthly effective rates)
-        Q    Quantity         ;  vector 1-by-N
     """
     n = nbonds(P)                               # number of bonds in portfolio
     
-    DBDY = []
+    DPDY = []
     if n > 1:
         for B_CF in P:
-            DBDY = np.append(DBDY,dBdY(T,B_CF,Y))
-        DBDY = DBDY.reshape(len(DBDY)/n,n)
+            DPDY = np.append(DPDY,dBdY(T,B_CF,Y))
+        DPDY = DPDY.reshape(n,len(DPDY)/n)
     else:
-        DBDY = dBdY(T,P,Y)
-        
-    DPDY = Q*DBDY
+        DPDY = dBdY(T,P,Y)
     
-    return DPDY
+    return DPDY.T
 
     
 
@@ -198,10 +195,7 @@ def portfolio(P,Y,Q,K):
        Note: Each column of KRD corresponds to an individual bond; there is a
              row for each key rate.
     """  
-    try:
-        s = np.shape(P)[1]
-    except IndexError:
-        s = np.size(P)                                           # time length
+    s = tlen(P)                                             # length of time
     T = np.arange(s)+1                                      # time-to-cashflow
       
     pv   = []
@@ -209,12 +203,12 @@ def portfolio(P,Y,Q,K):
         pv   = np.append(pv,pvalcf(T,CF,Y))
     PV = np.sum(pv)  
     
-    DPDY = dPdY(T,P,Y,Q)
+    DPDY = dPdY(T,P,Y)
     DK = dkinterp(T,K)
     dPdYk = np.dot(DK,DPDY)
     
     mTy = (1./12)                            # month-to-year conversion factor
-    KRD = mTy*(1/PV)*dPdYk
+    KRD = mTy*(1/PV)*np.sum(Q*dPdYk, 1)
     return KRD, PV
     
 
@@ -228,7 +222,13 @@ def nbonds(P):
     return N
  
     
- 
+def tlen(P):
+    """Extracts length of time from portfolio"""
+    try:
+        s = np.shape(P)[1]
+    except IndexError:
+        s = np.size(P)                                           # time length
+    return s
     
     
     
@@ -256,17 +256,23 @@ def immunize(Pa,Y,Qa,Pl,K,w0='null',r=0.5):
     """
     N = nbonds(Pl)                    # number of bonds in liability portfolio
         
+    
     KRDa,PVa = portfolio(Pa,Y,Qa,K)                 # obtain key rate and PV's
-    KRDl = portfolio(Pl,Y,np.ones(N),K)[0]
+    
+    # obtain present values of each liability (ignoring KRDs)
+    s = tlen(Pl)                                             # length of time
+    T = np.arange(s)+1                                      # time-to-cashflow
+    L = np.array([bond(Pl[j],Y,K)[1] for j in range(len(w0))])
+    DLDY = dPdY(T,Pl,Y)                         # liability sensitivity matrix                                
+    KRDl = (1./L)*DLDY                    # liability key rate duration matrix
     
     A = KRDl                                  # system setup and initilization
-    b = (1/r)*np.sum(KRDa,1)
+    b = (1/r)*KRDa
     if w0 == 'null':
         w0 = np.zeros(N)        
     w, err = immunize_solve(A,b,w0)                        # solve for weights
     
     # obtain present values of each liability (ignoring KRDs)
-    L = np.array([bond(Pl[j],Y,K)[1] for j in range(len(w))])
     q = -(1./L)*w*(r*PVa)                      # convert weights to quantities
     return q, err
         
