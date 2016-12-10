@@ -38,6 +38,34 @@ monthly_rates = im.my_monthly_effective_rate(I)
 
 transaction_cost = 0.05 # 5% transaction costs - we can change this
 
+Transaction = np.zeros(max_months)
+Transaction_krd = np.zeros(max_months)
+VTransaction = np.zeros(max_months)
+VTransaction_krd = np.zeros(max_months)
+considered = 36        #use 3 years of prior data in interest calculations
+
+LType = np.zeros(N)
+transaction = np.zeros(N)
+vtransaction = np.zeros(N)
+Vasicek = I.ix[considered:].copy()
+    
+Vasicek.ix[0] = im.my_vasicek(I,considered)
+Vasicek.ix[0] = im.my_monthly_effective_rate(Vasicek.ix[0])
+    
+# loop for FIRST MONTH ONLY in order to set liabilities
+transaction, Liability_number, Portfolio_L, transaction_krd, Liability_number_krd, Portfolio_L_krd = bpf.firstMonth(N,Type,
+               possible_types,considered,coupon_rate,max_months,
+               monthly_rates,Portfolio_A,Portfolio_L,transaction_cost,I,
+               LType,Liability_number,transaction,K)
+    
+VLiability_number = Liability_number.copy()
+VLiability_number_krd = Liability_number_krd.copy()
+Transaction[0] = np.sum(transaction)
+Transaction_krd[0] = np.sum(transaction_krd)
+VTransaction[0] = np.sum(transaction)
+VTransaction_krd[0] = np.sum(transaction_krd)
+considered = considered +1
+
 FirstDF = pd.DataFrame(data = [np.zeros(max_months), np.zeros(max_months)],
                                index = ['Data Based', 'Vasicek Based'])        
 AlphaPanel = pd.Panel(data = {0.1 : FirstDF, 0.2 : FirstDF, 0.3 : FirstDF,
@@ -46,35 +74,10 @@ AlphaPanel = pd.Panel(data = {0.1 : FirstDF, 0.2 : FirstDF, 0.3 : FirstDF,
                               1.0 : FirstDF})
     
 for alpha in np.linspace(0.1, 1.0, num = 10):
+    considered = 37
     print alpha
     gamma = alpha
-    Transaction = np.zeros(max_months)
-    Transaction_krd = np.zeros(max_months)
-    VTransaction = np.zeros(max_months)
-    VTransaction_krd = np.zeros(max_months)
-    considered = 36        #use 3 years of prior data in interest calculations
 
-    LType = np.zeros(N)
-    transaction = np.zeros(N)
-    vtransaction = np.zeros(N)
-    Vasicek = I.ix[considered:].copy()
-    
-    Vasicek.ix[0] = im.my_vasicek(I,considered)
-    Vasicek.ix[0] = im.my_monthly_effective_rate(Vasicek.ix[0])
-    
-    # loop for FIRST MONTH ONLY in order to set liabilities
-    transaction, Liability_number, Portfolio_L, transaction_krd, Liability_number_krd, Portfolio_L_krd = bpf.firstMonth(N,Type,
-               possible_types,considered,coupon_rate,max_months,
-               monthly_rates,Portfolio_A,Portfolio_L,transaction_cost,I,
-               LType,Liability_number,transaction,K)
-    
-    VLiability_number = Liability_number.copy()
-    VLiability_number_krd = Liability_number_krd.copy()
-    Transaction[0] = np.sum(transaction)
-    Transaction_krd[0] = np.sum(transaction_krd)
-    VTransaction[0] = np.sum(transaction)
-    VTransaction_krd[0] = np.sum(transaction_krd)
-    considered = considered +1
     
     
     # loop for ALL OTHER MONTHS
