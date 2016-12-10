@@ -61,3 +61,69 @@ ggplot(data = ag_df, aes(x = bondtype, y = rates)) +
   ggtitle('Yield curve for 7/29/2016')
 
 ggsave('ag_yield_curve_alt.pdf')
+
+
+## results stuffs.
+
+files = list.files(pattern="*.csv")
+
+full_df <- data.frame(idx = numeric(0), databased = numeric(0), vasicekbased = numeric(0))
+rates_df <- data.frame(idx = numeric(0), ratetype = character(0), rate = numeric(0))
+for(fil in files){
+  
+  
+  if(grepl('Alpha',fil)){
+    
+    # read alpha file transpose and remove header row.
+    df <- read.csv(fil, header=FALSE)
+    df <- t(df)
+    df <- df[-c(1),]
+    
+    # setting up new columns as numerics and alpha
+    alpha <- substr(fil, 7,nchar(fil)-4)
+    col1 <- as.numeric(df[,1])
+    col2 <- as.numeric(df[,2])
+    col3 <- as.numeric(df[,3])
+    
+    # load data into full_df
+    new_df <- data.frame(idx = col1, databased = col2, vasicekbased = col3, alpha = alpha)
+    new_df$alpha <- alpha
+    full_df <- rbind(full_df,new_df)
+    
+    # plot transaction costs.
+    ggplot(data = new_df, aes(x = idx)) +
+      geom_line(aes(y = vasicekbased, color = "Vasicek Based")) +
+      geom_line(aes(y = databased, color = "Data Based")) +
+      guides(color=guide_legend(title=NULL)) +
+      xlab('Months') +
+      ylab('Transaction Costs') +
+      ggtitle(paste('Transaction Costs at Alpha = ', alpha))
+    ggsave(paste('vis/alpha',alpha,'.pdf', sep = ''))
+    
+  }
+  if(grepl('Rates',fil)){
+    # working with Rates files.
+    rdf <- read.csv(fil)
+    
+    # grab the 1 year interest rate and type.
+    ratetype <- substr(fil,1,nchar(fil)-10)
+    rates <- rdf[,8]
+    idx <- c(1:84)
+    rates_df <- rbind(rates_df, data.frame(idx = idx, ratetype = ratetype, rate = rates))
+    # grab the 1 year rates.
+    
+    
+    
+  }
+  
+}
+
+# vasicek performance.
+ggplot(data = rates_df, aes(x = idx, y = rate, color = ratetype)) +
+  geom_line() +
+  ylab('Interest Rate') +
+  xlab('Months') +
+  ggtitle('Vasicek interest rate model on 5 year bonds') +
+  guides(color=guide_legend(title=NULL))
+
+ggsave('vis/Vasicekperformance.pdf')
