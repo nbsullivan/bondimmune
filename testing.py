@@ -1,5 +1,5 @@
 import numpy as np
-import datetime
+import datetime 
 from datetime import date
 import portfoliofuns
 from dateutil.relativedelta import relativedelta
@@ -7,23 +7,26 @@ import pandas as pd
 
 
 
+
 if __name__ == '__main__':
 
 
 
-	
+	dt_str = '1/1/2016'
 
-	# basic long position for a 3-month bond at 5%
+	startdate = datetime.datetime.strptime(dt_str, "%m/%d/%Y").date()
+	
+	cbond = portfoliofuns.cBond(); 
+	couponpayments, coupondates = cbond.new(1000,6,6,.07,startdate)
 	position = { "weight": 1,
 				 "positiontype": "long",
-				 "bondtype" : "3-month",
-				 "interestrate" : .05,
-				 "createdate" : portfoliofuns.date_to_day(date.today()),
-				 "maturitydate" : portfoliofuns.date_to_day(date.today() + relativedelta(months=3)),
-				 "coupondates" : np.array(portfoliofuns.date_to_day(date.today() + relativedelta(months=3))),
-				 "couponpayments" : np.array(1.05) }
-
-	
+				 "bondtype" : "6-month",
+				 "interestrate" : .046,
+				 "createdate" : portfoliofuns.date_to_day(startdate),
+				 "maturitydate" : portfoliofuns.date_to_day(startdate + relativedelta(months=6)),
+				 "coupondates" : coupondates,
+				 "couponpayments" : couponpayments,     
+				 "payperyear" : 6 } # not currently used in computations
 
 	# testing effective_rate
 	effrate = portfoliofuns.effective_rate(position)
@@ -31,60 +34,67 @@ if __name__ == '__main__':
 	print "effective rate"
 	print effrate
 
-	P = portfoliofuns.Pnull(position = position, n = 1)
-	print "Pnull value"
-	print P
 
-	Positionvalue = portfoliofuns.position_value(position = position, currenttime = 1./12)
+	currenttime = portfoliofuns.date_to_day(startdate)
+	Positionvalue = portfoliofuns.position_value(position = position, currenttime = currenttime)
 
-	# finding value of bond after 1 month
-	print "position value at 1 month bond after."
+	print "position value at creation time of bond."
 	print Positionvalue
-
-
+	
 	# testing out mc_duration calculation.
-	mcdur = portfoliofuns.mc_duration(position = position, currenttime = portfoliofuns.date_to_day())
+	currenttime = portfoliofuns.date_to_day(startdate + relativedelta(months=5))
+	mcdur = portfoliofuns.mc_duration(position = position, currenttime = currenttime)
 
 	print "maculay duration."
 	print mcdur
 
-	moddur = portfoliofuns.mod_duration(position = position, currenttime = portfoliofuns.date_to_day())
+	moddur = portfoliofuns.mod_duration(position = position, currenttime = currenttime)
 
 	print "modified duration"
 	print moddur
 
-	"""
+	
 	# testing portfolio duration function.
 
-	# postion 1 same as above .25 weight
-	position1 = { "weight": .25,
-			 "positiontype": "long",
-			 "bondtype" : "3-month",
-			 "interestrate" : .05,
-			 "createdate" : np.datetime64(date.today()),
-			 "maturitydate" : np.datetime64(date.today() + relativedelta(months=3)),
-			 "coupondates" : np.array(np.datetime64(date.today() + relativedelta(months=3))),
-			 "couponpayments" : np.array(1.05)}
 
-	# position 2 1 year bond at 4% .5 weight
-	position2 = { "weight": .5,
+	# postion 1 same as above 1/3 weight
+	position1 = { "weight": 1./3,
 				 "positiontype": "long",
-				 "bondtype" : "1-year",
-				 "interestrate" : .04,
-				 "createdate" : np.datetime64(date.today()),
-				 "maturitydate" : np.datetime64(date.today() + relativedelta(years=1)),
-				 "coupondates" : np.array(np.datetime64(date.today() + relativedelta(years=1))),
-				 "couponpayments" : np.array(1.04)}
+				 "bondtype" : "3-month",
+				 "interestrate" : .05,
+				 "createdate" : portfoliofuns.date_to_day(date.today()),
+				 "maturitydate" : portfoliofuns.date_to_day(date.today() + relativedelta(months=3)),
+				 "coupondates" : np.array([portfoliofuns.date_to_day(date.today() + relativedelta(months=1)),
+				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=2)),
+				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=3)), 
+				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=3))]),
+				 "couponpayments" : np.array([10, 10, 10, 100]) }
 
-	# position 3 5 year bond at 4.5% .25 weight
-	position3 = { "weight": .25,
+	# position 2 same as above 1/3 weight
+	position2 = { "weight": 1./3,
 				 "positiontype": "long",
-				 "bondtype" : "3-year",
-				 "interestrate" : .045,
-				 "createdate" : np.datetime64(date.today()),
-				 "maturitydate" : np.datetime64(date.today() + relativedelta(years=3)),
-				 "coupondates" : np.array(np.datetime64(date.today() + relativedelta(years=3))),
-				 "couponpayments" : np.array(1.045)}
+				 "bondtype" : "3-month",
+				 "interestrate" : .05,
+				 "createdate" : portfoliofuns.date_to_day(date.today()),
+				 "maturitydate" : portfoliofuns.date_to_day(date.today() + relativedelta(months=3)),
+				 "coupondates" : np.array([portfoliofuns.date_to_day(date.today() + relativedelta(months=1)),
+				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=2)),
+				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=3)), 
+				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=3))]),
+				 "couponpayments" : np.array([10, 10, 10, 100]) }
+
+	# position 3 same as above 1/3 weight
+	position3 = { "weight": 1./3,
+				 "positiontype": "long",
+				 "bondtype" : "3-month",
+				 "interestrate" : .05,
+				 "createdate" : portfoliofuns.date_to_day(date.today()),
+				 "maturitydate" : portfoliofuns.date_to_day(date.today() + relativedelta(months=3)),
+				 "coupondates" : np.array([portfoliofuns.date_to_day(date.today() + relativedelta(months=1)),
+				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=2)),
+				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=3)), 
+				 							portfoliofuns.date_to_day(date.today() + relativedelta(months=3))]),
+				 "couponpayments" : np.array([10, 10, 10, 100]) }
 
 	positionlist = [position1, position2, position3]
 
@@ -100,8 +110,16 @@ if __name__ == '__main__':
 
 	print "portfolio duration:"
 	print portdur
-	"""
 
-	print portfoliofuns.date_to_day(date(1962, 1, 2))
+	print "this should read \"1962-01-03\""
+	print portfoliofuns.day_to_date(daynumber = 1)
+
+
+	print "testing grabing interestrate data from the dataset"
+	print portfoliofuns.todays_rates(daynumber = 0)
+
+
+
+
 
 

@@ -3,31 +3,44 @@ import numpy as np
 import datetime
 from datetime import date
 from dateutil.relativedelta import relativedelta
+from math import isnan
+from pprint import pprint as pp
 
 """
-portfolio_df structure:
+	portfolio_list structure:
 
-weight: percentage of portfolio invested in position, float < 1
-positiontype: either "long" or "short", string
-bondtype: 1-month	3-month	6-month	1-year	2-year	3-year	5-year	7-year	10-year	20-year	30-year, string
-interestrate: annual interest rate, 5% = .05, float
-maturitydate: date of maturity, datetime64
-coupondates: dates of coupon payments, if zero coupon simply the maturity date, list of datetime64
-couponpayments: payment amounts for coupon dates list of dollar amounts
+	A list of position dictionary
 
-position dictionary strcture: (same as a row in the portfolio dataframe)
 
-weight: percentage of portfolio invested in position, float
-positiontype: either "long" or "short", string
-bondtype: 1-month	3-month	6-month	1-year	2-year	3-year	5-year	7-year	10-year	20-year	30-year, string
-interestrate: annual interest rate, 5% = .05, float
-maturitydate: date of maturity, datetime64
-coupondates: dates of coupon payments, if zero coupon simply the maturity date, list of datetime64
-couponpayments: payment amounts for coupon dates list of dollar amounts
+	position dictionary strcture: (same as a row in the portfolio dataframe)
+
+	position = { "weight": 1,
+				 "positiontype": "long",
+				 "bondtype" : "6-month",
+				 "interestrate" : .046,
+				 "createdate" : portfoliofuns.date_to_day(startdate),
+				 "maturitydate" : portfoliofuns.date_to_day(startdate + relativedelta(months=6)),
+				 "coupondates" : np.array([portfoliofuns.date_to_day(startdate + relativedelta(months=2)),
+				 							portfoliofuns.date_to_day(startdate + relativedelta(months=4)),
+				 							portfoliofuns.date_to_day(startdate + relativedelta(months=6)), 
+				 							portfoliofuns.date_to_day(startdate + relativedelta(months=6)),]),
+				 "couponpayments" : np.array([70, 70, 70, 1000]),
+				 "payperyear" : 6 }
+
 
 some other notes:
-in position_value currenttime is a float representing number of years?
-in mc_duration currenttime is a datetime64 object.
+currenttime is a day number
+days are numbered with integers with, day 0 = 1962-01-02
+
+TODOS:
+1. make a random portfolio generator. (input vector of days and bondtypes, returns a portfolio as defined in testing.py)
+2. trim dataset to only include records where all bond types are availiable
+3. start making time loop
+4. consolidate helper functions
+5. 
+
+
+
 """
 
 	
@@ -40,85 +53,57 @@ def mc_duration(position = None, currenttime = None):
 	dates = position["coupondates"]
 	payments = position["couponpayments"]
 
-	print "dates"
-	print dates
-	print "payments"
-	print payments
-
-
-
 	# handle default case for current time
 	if currenttime == None:
 		currenttime = date_to_day()
 
-	print "currenttime"
-	print currenttime
-
-	# make the t_j - t_0 terms
-	offsetdates = float(dates - currenttime) / 365
+	offsetdates = (dates - float(currenttime))
 
 
-	# do the same things with the dates. also they are in terms of days.
-	datesunitless = float(dates - position["createdate"]) / 365
+	cdates = offsetdates[:-1]
+	cpayments = payments[:-1]
+	mdate = offsetdates[-1]
+	mpayments = payments[-1]
 
-	# note things are not happy when we are doing this days and years do not have the same base unit, this assume we are not in a leap year
-	Pjslist = np.array([position_value(position = position, currenttime = b) for (a,b) in np.ndenumerate(offsetdates)])
+	cdates, cpayments = zero_out(cdates, cpayments)
 
-	macdur = np.sum(Pjslist * offsetdates) / np.sum(Pjslist * datesunitless)
+	presentvalue = position_value(position, currenttime)
 
-	print "pjs list"
-	print Pjslist
-	print "offsetdates"
-	print offsetdates
-	print "datesunitless"
-	print datesunitless
+	print "presentvalue"
+	print presentvalue
+	effrate = effective_rate(position = position)
 
-	# grab time period for scaling duration
-	timeperiod = timeper(position = position)
+	oneoverPV = 1/ presentvalue
 
+	couponsum = np.sum((cdates/365) * cpayments / (effrate**cdates))
 
-	# change the unit of macdur to the time period of the bond.
-	macdur = macdur * timeperiod
+	finalsum = mdate/365 * mpayments/(effrate**mdate)
+
+	macdur = oneoverPV* (couponsum + finalsum)
+
 
 	return macdur
 
 
 def mod_duration(position = None, currenttime = None):
+	"""
+	returns modified duration of a position at a currenttime
+	"""
 
 	macdur = mc_duration(position = position, currenttime = currenttime)
 	effrate = effective_rate(position = position)
 
-	moddur = macdur / (((effrate - 1)/position["coupondates"].size) + 1)
-
-
+	moddur = macdur / effrate
 	return moddur
 
-
-
-
-def asset_procceds(portfolio = None):
-	"""
-	asset procceds of a portfolio
-	"""
-
-	############### TODO ################
-
-	return None
-
-def liability_outgo(portfolio = None):
-	"""
-	liability-outgo of a portfolio
-	"""
-
-	############### TODO ################
-
-	return None
 
 def position_value(position = None, currenttime = None):
 	"""
 	calculate the value of a position, can accept long and short positions.
-	returns position value based on derivates market book
+	but short positions have not been coded yet
+	returns position value based on derivates market book.
 	"""
+
 
 	if position["positiontype"] == 'short':
 		pass
@@ -126,16 +111,21 @@ def position_value(position = None, currenttime = None):
 
 	if position["positiontype"] == 'long':
 		"""
-		based on derriavitives market book page 209 equation 7.4
+		
 		"""
 		# get effective rate and time period
 		effrate = effective_rate(position = position)
 		timeperiod = timeper(position = position)
 
-		t0price = Pnull(position = position, n = currenttime)
-		t1price = Pnull(position = position, n = timeperiod)
+		# get Payments and days
+		Pc = position["couponpayments"] 
+		tnow = position["coupondates"] - currenttime
 
-		posvalue = t1price / t0price
+
+		# set them relative to current time
+		tnew, Pcnew = zero_out(tnow, Pc)
+
+		posvalue = np.sum(Pcnew/(effrate**tnew))
 
 	else:
 		print "bad positiontype"
@@ -143,24 +133,12 @@ def position_value(position = None, currenttime = None):
 
 	return posvalue
 
-def Pnull(position = None, n = None):
-	"""
-	gives P(0,n) as defined by derivatives market page 208 equation 7.1
-	"""
-
-
-	effrate = effective_rate(position)
-
-	# note eff rate already has 1 added to it.
-	P = 1.0 / ((effrate) ** n)
-
-	return P
-
 
 
 def timeper(position = None):
 	"""
-	return effective rate and time period of bond, given a bondtype and interestrate as defined above.
+	returns time period of bond, given a bondtype.
+	This might not be used.
 	"""
 	bondtype = position["bondtype"]
 	interestrate = position["interestrate"]
@@ -185,21 +163,21 @@ def timeper(position = None):
 
 def effective_rate(position = None):
 	"""
-	effective rate for a bond, this also might be YTM
+	daily effective rate for a bond, this also might be YTM
 	"""
 
 	# get interest rate and time period of possition
 	interestrate = position["interestrate"]
-	timeperiod = timeper(position)
+	#timeperiod = timeper(position)
 
-	effectiverate = (1 + interestrate)**timeperiod
+	effectiverate = (1 + interestrate)**(1./365)
 
 	return effectiverate
 
 
 def portfolio_duration(portfolio = None, Durationtype = 'mc', currenttime = None):
 	"""
-	has not been tested yet.
+	returns either modified or macaulay duration for a portfolio
 	"""
 
 	portfolio_list = portfolio.to_dict('records')
@@ -248,17 +226,169 @@ def date_to_day(datetimeobj = None):
 
 		datetimeobj = date.today()
 
-	delta = datetimeobj - epoch
+	# one day I will figure out how to deal with datetime objects. today is not that day though
+	try:
+		delta = datetimeobj - epoch
+	except:
+		delta = datetimeobj.to_datetime().date() - epoch
+
 	days = delta.days
 	return days
 
 
+def day_to_date(daynumber = None):
+	"""
+	converts a day number to a datetime.date object
+	"""
+
+	epoch = date(1962, 1, 2)
+
+	if daynumber == None:
+		print "no day given"
+		return None
+
+
+	newdate = epoch + datetime.timedelta(days = daynumber)
+
+	return newdate
+
+
+def todays_rates(daynumber = None, interestrate_df = None):
+	"""
+	grabs current days rates from interestrate_df
+	"""
+
+	# if no day number use todays number
+	if daynumber == None:
+		daynumber = date_to_day(date.today())
+
+	# if no interestrate_df use fed dataset
+	if not isinstance(interestrate_df, pd.DataFrame):
+		interestrate_df = pd.read_csv("cleaned_data.csv")
+
+
+	day_dict = interestrate_df.loc[[daynumber]].to_dict('records')[0]
+
+	keys = day_dict.keys()
+
+
+	# the following below is not nessicary if using the trimmed dataset.
+	# remove day number and date for moment
+	keys.remove('daynumber')
+	keys.remove('date')
+
+	clean_dict = {}
+
+	# we only want bond types that have interest rates or exist.
+	for key in keys:
+
+		if isnan(day_dict[key]):
+			pass
+
+		else:
+			clean_dict[key] = day_dict[key]
 
 
 
+	clean_dict['daynumber'] = day_dict['daynumber']
+	clean_dict['date'] = day_dict['date']
+
+	return clean_dict
 
 
+def zero_out(tnow = None, Pc = None):
+	"""
+	removes elements from tnow and Pc lists when tnow <= 0 
+	"""
 
+	tnew = []
+	Pcnew = []
+	k = 0
+	for x in np.nditer(tnow):
+
+		# if the day is less than zero do not add it.
+	    if x >= 0:
+	    	tnew.append(tnow[k])
+	    	Pcnew.append(Pc[k])
+
+	    k = k + 1
+
+	tnew = np.array(tnew)
+	Pcnew = np.array(Pcnew)
+
+	return tnew, Pcnew
+
+
+ 
+def pval(T,CF,Y,mode='disc'):
+#   Computes present value of cash flows.
+#    T    Term structure;  vector 1-by-N  (years)
+#    CF   Cash flow;       vector 1-by-N
+#    Y    Yield structure; vector 1-by-N  (annual effective rate)
+    if mode=='cont':
+        s = CF/np.exp(Y*T)
+        P = np.sum(s)
+    elif mode=='disc':
+        n = 365
+        s = CF/((1+Y/n)**(n*T))
+        P = np.sum(s)
+    return P
+    
+    
+    
+def fval(T,CF,Y,mode='disc'):
+    F = pval(-T,CF,Y,mode)
+    return F
+
+
+ 
+class cBond:
+    def new(self,faceValue,matMonths,annualCouponNum,couponRate,
+            createDate = date(1962, 1, 2)):
+    #   Constructs coupon bond at monthly scale. Assuming equally spaced 
+    #    payments. Also assuming annualCouponNum is a factor of 12 and that 
+    #    matMonths is a multiple of this factor.
+    #   Returns T with date objects
+    #
+    #    faceValue         Face value of bond;  scalar
+    #    matMonths         Months to maturity;   scalar
+    #    annualCouponNum   Number of coupons per year;   scalar
+    #    couponRate        Coupon value as a percent of face value;   scalar
+    #    createDate        Date bond was created (i.e., day 0)
+        if annualCouponNum == 0:
+            C = np.array([faceValue])
+            T = [createDate+relativedelta(months=matMonths)]
+        else:
+            if 12 % annualCouponNum != 0:
+                raise RuntimeError('annualCouponNum must be a factor of 12')    
+            k = 12/annualCouponNum                             # step size (months)
+            if matMonths % k != 0:
+                raise RuntimeError('matMonths must align with annualCouponNum')
+            n = matMonths/k                                    # number of payments
+            cc = couponRate * faceValue       
+            C = np.zeros(n)    
+            T = []
+            for i in range(n):
+                C[i] = cc;   
+                T.append(createDate+relativedelta(months=(i+1)*k))
+                if i==n-1:
+                    C[i] += faceValue 
+        return C, T
+    
+'''
+    def shift(self,bond,startMonth,endMonth):
+    #   Shifts coupon bond for alignment with other bonds and timing.
+    #
+    #    bond          Bond object constructed by .new function
+    #    startMonth    Month bond timing begins (prepending 0s)
+    #    endMonth      Month bond tracking ends (postpending 0s)
+        prepend = np.zeros((1,startMonth-1))
+        sbond = np.append(prepend,bond)
+        if endMonth > bond.size:
+            postpend = np.zeros((1,endMonth-bond.size))
+            sbond = np.append(sbond,postpend)
+        return sbond
+'''
 
 
 
