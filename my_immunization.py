@@ -77,7 +77,7 @@ def my_Price_Change(B, i, ncp):
     Change = Discount*B*(Range/ncp)
     Price_Change = np.sum(Change)
     Price_Change = Price_Change/(1+i)
-    return -Price_Change
+    return np.abs(Price_Change)
  
 #%%
 def my_portfolio_generator(N, max_months):
@@ -121,12 +121,15 @@ def my_present_value(B, i):
 #%%
 def my_macD(B, i):
     PV = im.my_present_value(B,i)
-    s = np.size(B)
-    t = np.arange(s)+1
-    Discount = (1+i)**(-t)
-    factors = B*Discount
-    macD = (1/PV)*np.sum((t/12.0)*factors)
-    return macD
+    if (PV == 0):
+        return 0
+    else:
+        s = np.size(B)
+        t = np.arange(s)+1
+        Discount = (1+i)**(-t)
+        factors = B*Discount
+        macD = (1/PV)*np.sum((t/12.0)*factors)
+        return macD
 
 #%%
 
