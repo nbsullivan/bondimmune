@@ -72,15 +72,16 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
     Transaction[0] = np.sum(transaction)
     Transaction_krd[0] = np.sum(transaction_krd)
     VTransaction[0] = np.sum(transaction)
-    VTransaction[0] = np.sum(transaction_krd)
+    VTransaction_krd[0] = np.sum(transaction_krd)
     considered = considered +1
     
     
     # loop for ALL OTHER MONTHS
-    Transaction, VTransaction, Vasicek = bpf.otherMonth(max_months,Portfolio_A,
-               Portfolio_L,N,I,considered,Vasicek,monthly_rates,Type,
-               Coupons_per_year,gamma,LType,Liability_number,transaction_cost,
-               Transaction,VLiability_number,VTransaction)   
+    Transaction, VTransaction, Vasicek, Transaction_krd = bpf.otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
+               monthly_rates,Type,Coupons_per_year,gamma,LType,
+               Liability_number,transaction_cost,Transaction,
+               VLiability_number,VTransaction,Liability_number_krd,
+               Transaction_krd,Portfolio_L_krd,VTransaction_krd,K)   
     
     data = [Transaction, VTransaction]
     print(data)
