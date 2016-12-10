@@ -36,25 +36,6 @@ monthly_rates = im.my_monthly_effective_rate(I)
 
 transaction_cost = 0.05 # 5% transaction costs - we can change this
 
-
-
-
-Transaction = np.zeros(max_months)
-VTransaction = np.zeros(max_months)
-considered = 36 #use 3 years of prior data in interest calculations
-
-LType = np.zeros(N)
-transaction = np.zeros(N)
-vtransaction = np.zeros(N)
-Vasicek = I.ix[considered:].copy()
-    
-Vasicek.ix[0] = im.my_vasicek(I,considered)
-Vasicek.ix[0] = im.my_monthly_effective_rate(Vasicek.ix[0])
-    
-      
-#%% Computing transactions costs for all other months using both Vasicek and
-# the given data
-
 FirstDF = pd.DataFrame(data = [np.zeros(max_months), np.zeros(max_months)],
                                index = ['Data Based', 'Vasicek Based'])        
 AlphaPanel = pd.Panel(data = {0.1 : FirstDF, 0.2 : FirstDF, 0.3 : FirstDF,
@@ -63,15 +44,26 @@ AlphaPanel = pd.Panel(data = {0.1 : FirstDF, 0.2 : FirstDF, 0.3 : FirstDF,
                               1.0 : FirstDF})
     
 for alpha in np.linspace(0.1, 1.0, num = 10):
-    considered = 37
     print alpha
-    gamma = alpha #function of alpha to translate risk tolerance
+    gamma = alpha
+    Transaction = np.zeros(max_months)
+    VTransaction = np.zeros(max_months)
+    considered = 36        #use 3 years of prior data in interest calculations
+
+    LType = np.zeros(N)
+    transaction = np.zeros(N)
+    vtransaction = np.zeros(N)
+    Vasicek = I.ix[considered:].copy()
+    
+    Vasicek.ix[0] = im.my_vasicek(I,considered)
+    Vasicek.ix[0] = im.my_monthly_effective_rate(Vasicek.ix[0])
     
     # loop for FIRST MONTH ONLY in order to set liabilities
     transaction, Liability_number, Portfolio_L = bpf.firstMonth(N,Type,
                possible_types,considered,coupon_rate,max_months,
                monthly_rates,Portfolio_A,Portfolio_L,transaction_cost,I,
                LType,Liability_number,transaction)
+    
     VLiability_number = Liability_number.copy()
     Transaction[0] = np.sum(transaction)
     VTransaction[0] = np.sum(transaction)
@@ -82,7 +74,8 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
     Transaction, VTransaction, Vasicek = bpf.otherMonth(max_months,Portfolio_A,
                Portfolio_L,N,I,considered,Vasicek,monthly_rates,Type,
                Coupons_per_year,gamma,LType,Liability_number,transaction_cost,
-               Transaction,VLiability_number,VTransaction)      
+               Transaction,VLiability_number,VTransaction)   
+    
     data = [Transaction, VTransaction]
     print(data)
     index = ['Data Based','Vasicek Based']
@@ -92,6 +85,8 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
     AlphaPanel.ix[alpha] = TransactionDF
 #FOR ALPHA end
 
+
+#%% Writing to CSV
 '''    
 for x in np.linspace(0.1, 1.0, num = 10):
     df = AlphaPanel.ix[x]
