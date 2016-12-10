@@ -8,10 +8,11 @@ Authors: Anthony Gusman, Nathan Johnson, Nick Sullivan
 
 import pandas as pd
 import numpy as np
-from datetime import timedelta
-
+import krdur as krd
 import my_immunization as im
 import portfoliofuns as pf
+import bond_project_funs as bpf
+from datetime import timedelta
 
 
 ###############################PREPARING DATA##################################
@@ -43,9 +44,11 @@ def prepareData(Data,startdate,enddate):
 #################################FIRST MONTH###################################   
 def firstMonth(N,Type,possible_types,considered,coupon_rate,max_months,
                monthly_rates,Portfolio_A,Portfolio_L,transaction_cost,I,
-               LType,Liability_number,transaction):
+               LType,Liability_number,transaction,K):
 # Inputs: N, possible_types, Type, I, considered, coupon_rate, max_months,
-#         monthly_rates, Portfolio_A, Portfolio_L, Liability_number   
+#         monthly_rates, Portfolio_A, Portfolio_L, Liability_number
+
+    # Standard computation
     for y in np.arange(N):
         if Type[y] == 1:
             continue
@@ -76,7 +79,24 @@ def firstMonth(N,Type,possible_types,considered,coupon_rate,max_months,
         acquisition = Liability_number[y]*PVL
         
         transaction[y] = transaction_cost*(net + acquisition)
-    return transaction, Liability_number, Portfolio_L
+        
+    # KRD computation
+    NL = K.size+1;                           # one more than key rate durations
+    ''' Need a better way to grab appropriate liability portfolio'''
+    Portfolio_L_krd = Portfolio_L[0:NL]
+    interp_rates = krd.rateinterp(monthly_rates,considered,max_months)   # krd
+    Qa = np.ones(krd.nbonds(Portfolio_A))
+    N2short,err,w = krd.immunize(Portfolio_A,interp_rates,Qa,Portfolio_L_krd,K)
+    Liability_number_krd = np.negative(N2short)
+    
+    transaction_krd = np.zeros(transaction.shape)
+    transaction_krd[NL] = krd.portfolio(Portfolio_A[NL:],interp_rates,Qa[NL:],K)[1]
+    for y in np.arange(NL):
+        acquisition_krd = Liability_number_krd[y]*krd.bond(Portfolio_L_krd[y],interp_rates,K)[1]
+        net_krd = krd.bond(Portfolio_A[y],interp_rates,K)[1] - acquisition_krd        
+        transaction_krd[y] = transaction_cost*(net_krd + acquisition_krd)
+    
+    return transaction, Liability_number, Portfolio_L, transaction_krd, Liability_number_krd, Portfolio_L_krd
     
 #################################OTHER MONTHS##################################
 def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,

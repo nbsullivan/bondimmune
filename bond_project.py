@@ -6,6 +6,7 @@ Authors: Anthony Gusman, Nathan Johnson, Nick Sullivan
 
 import pandas as pd
 import numpy as np
+import krdur as krd
 import my_immunization as im
 import portfoliofuns as pf
 import bond_project_funs as bpf
@@ -16,6 +17,7 @@ from datetime import timedelta
 max_months = 84
 N = np.random.randint(20, 51)
 possible_types = np.array([1.0, 3.0, 6.0, 12.0, 24.0, 36.0, 60.0, 84.0])
+K = np.array([1, 3, 6, 12, 24, 36, 60, 84])                    # set key rates
 coupon_rate = np.array([1, 3, 4, 6, 12])
 Portfolio_L = np.zeros((N,max_months))
 Liability_number = np.zeros(N)
@@ -47,7 +49,9 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
     print alpha
     gamma = alpha
     Transaction = np.zeros(max_months)
+    Transaction_krd = np.zeros(max_months)
     VTransaction = np.zeros(max_months)
+    VTransaction_krd = np.zeros(max_months)
     considered = 36        #use 3 years of prior data in interest calculations
 
     LType = np.zeros(N)
@@ -59,14 +63,16 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
     Vasicek.ix[0] = im.my_monthly_effective_rate(Vasicek.ix[0])
     
     # loop for FIRST MONTH ONLY in order to set liabilities
-    transaction, Liability_number, Portfolio_L = bpf.firstMonth(N,Type,
+    transaction, Liability_number, Portfolio_L, transaction_krd, Liability_number_krd, Portfolio_L_krd = bpf.firstMonth(N,Type,
                possible_types,considered,coupon_rate,max_months,
                monthly_rates,Portfolio_A,Portfolio_L,transaction_cost,I,
-               LType,Liability_number,transaction)
+               LType,Liability_number,transaction,K)
     
     VLiability_number = Liability_number.copy()
     Transaction[0] = np.sum(transaction)
+    Transaction_krd[0] = np.sum(transaction_krd)
     VTransaction[0] = np.sum(transaction)
+    VTransaction[0] = np.sum(transaction_krd)
     considered = considered +1
     
     

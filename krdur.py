@@ -95,6 +95,23 @@ def dPdY(T,P,Y):
     
     
 ###############################INTERPOLATION###################################
+def rateinterp(M,windowSize,maxMonths):
+    """Returns interpolated interest rates for all possible months.
+       
+       Inputs:
+                 M    Monthly interest rates           ;  matrix D-by-S
+        windowSize    Amount of history in current run
+         maxMonths    Number of possible months
+    """
+    S = M.ix[windowSize-1]                                  # current schedule
+    U = [float(S.index[i]) for i in range(S.size)]             # extract terms
+    V = [float(S.values[i]) for i in range(S.size)]            # extract rates
+    X = np.arange(maxMonths)+1                            # interpolated terms
+    Y = np.interp(X,U,V)                                  # interpolated rates
+    return Y
+
+
+
 def dkinterp(T,K):
     """Returns S-by-N key rate interpolation matrix.
        
