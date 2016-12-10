@@ -135,10 +135,10 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
 
         Vasicek.ix[x] = im.my_vasicek(I,considered)
         Vasicek.ix[x] = im.my_monthly_effective_rate(Vasicek.ix[x])
-       
+        
         ExpectedChange = np.zeros(N)
         VExpectedChange = np.zeros(N)
-        
+       
         # Find the maximum expected change in price based on data as well as
         # Vasicek estimate
         for y in np.arange(N):
@@ -191,10 +191,10 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
                 new_Liability_number[y] = (macD_A*PVA/(1+asset_rate))/(macD_L*PVL/(1+LI))
                 net = PVA - np.abs(new_Liability_number[y] - Liability_number[y])*PVL
                 acquisition = np.abs(new_Liability_number[y] - Liability_number[y])*PVL
-        #FOR transaction end        
+        
                 transaction[y] = transaction_cost*(net + acquisition)
                 Liability_number[y] = new_Liability_number[y]
-        
+        #FOR transaction end        
         Transaction[x] = np.sum(transaction)
         
         # Calculate transaciton costs based on Vasicek estimate
@@ -239,6 +239,7 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
         considered = considered + 1
     #FOR x end        
     data = [Transaction, VTransaction]
+#    print(data)
     index = ['Data Based','Vasicek Based']
     TransactionDF = pd.DataFrame(data, index)
     InterestPanel = pd.Panel(data = {'Data Rates' :monthly_rates.ix[36:], 
