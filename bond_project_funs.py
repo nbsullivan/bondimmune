@@ -50,7 +50,7 @@ def firstMonth(N,Type,possible_types,considered,coupon_rate,max_months,
 
     # Standard computation
     for y in np.arange(N):
-        if Type[y] == 1:
+        if Type[y] == 1 & y != 0:
             continue
         pt = possible_types.copy()
         choice = pt[possible_types <= Type[y]][-1]
