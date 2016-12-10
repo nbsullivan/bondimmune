@@ -69,6 +69,7 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
                LType,Liability_number,transaction,K)
     
     VLiability_number = Liability_number.copy()
+    VLiability_number_krd = Liability_number_krd.copy()
     Transaction[0] = np.sum(transaction)
     Transaction_krd[0] = np.sum(transaction_krd)
     VTransaction[0] = np.sum(transaction)
@@ -77,15 +78,16 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
     
     
     # loop for ALL OTHER MONTHS
-    Transaction, VTransaction, Vasicek, Transaction_krd = bpf.otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
+    Transaction, VTransaction, Vasicek, Transaction_krd, VTransaction_krd = bpf.otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
                monthly_rates,Type,Coupons_per_year,gamma,LType,
                Liability_number,transaction_cost,Transaction,
                VLiability_number,VTransaction,Liability_number_krd,
-               Transaction_krd,Portfolio_L_krd,VTransaction_krd,K)   
+               Transaction_krd,Portfolio_L_krd,VTransaction_krd,
+               VLiability_number_krd,K)   
     
-    data = [Transaction, VTransaction]
+    data = [Transaction, VTransaction, Transaction_krd, VTransaction_krd]
     print(data)
-    index = ['Data Based','Vasicek Based']
+    index = ['Data Based','Vasicek Based','Data Based (krd)','Vasicek Based (krd)']
     TransactionDF = pd.DataFrame(data, index)
     InterestPanel = pd.Panel(data = {'Data Rates' :monthly_rates.ix[36:], 
                                      'Vasicek Rates' : Vasicek})
