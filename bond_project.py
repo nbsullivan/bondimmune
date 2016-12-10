@@ -29,13 +29,13 @@ startdate = '3/1/2006'
 enddate = '2/1/2016'
 Data = pd.read_csv("trimmed_data.csv")
 I = bpf.prepareData(Data,startdate,enddate)
+'''
 Data = Data.as_matrix()
 Data = Data[148:, 2:11]
 Data = pd.DataFrame(Data[:,1:], index = Data[:,0], columns = ['1.0', '3.0', '6.0', '12.0', '24.0', '36.0', '60.0', '84.0'])
 dates = pd.date_range(startdate, enddate, freq = 'BMS')
 date_strings = pd.Series(dates.format())
 I = Data.ix[date_strings]
-'''
 for x in np.arange(np.size(dates)):
     d = pd.Series(dates.format())
     if np.isnan(I.ix[d.ix[x]].ix[0]):
