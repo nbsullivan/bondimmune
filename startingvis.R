@@ -22,7 +22,7 @@ cleaned_df <- rename(cleaned_df, newCnames)
 # melted data for facet plotting
 clean_rshp <- melt(cleaned_df, id = c ('daynumber', 'date'))
 
-theme_set(theme_gray(base_size = 18))
+theme_set(theme_gray(base_size = 22))
 
 reduced_df <- subset(trimmed_df, date > as.Date("2006-03-01") & date < as.Date("2016-02-29"))
 ggplot(data = reduced_df, aes(x = date, y = year1)) +
@@ -31,7 +31,7 @@ ggplot(data = reduced_df, aes(x = date, y = year1)) +
   ylab('Interest Rate') +
   ggtitle('Interest Rates of 1 year bonds')
 
-ggsave('1yearbondrates.pdf')
+ggsave('vis/1yearbondrates.pdf')
 
 
 
@@ -49,7 +49,7 @@ ggplot(data = ag_df, aes(x = maturities, y = rates)) +
   xlab('Maturity (Months)') +
   ggtitle('Yield curve for 7/29/2016')
 
-ggsave('ag_yield_curve.pdf')
+ggsave('vis/ag_yield_curve.pdf')
 
 
 ggplot(data = ag_df, aes(x = bondtype, y = rates)) +
@@ -60,7 +60,7 @@ ggplot(data = ag_df, aes(x = bondtype, y = rates)) +
   ylab('Interest Rate (%)') +
   ggtitle('Yield curve for 7/29/2016')
 
-ggsave('ag_yield_curve_alt.pdf')
+ggsave('vis/ag_yield_curve_alt.pdf')
 
 
 ## results stuffs.
@@ -110,9 +110,6 @@ for(fil in files){
     rates <- rdf[,8]
     idx <- c(1:84)
     rates_df <- rbind(rates_df, data.frame(idx = idx, ratetype = ratetype, rate = rates))
-    # grab the 1 year rates.
-    
-    
     
   }
   
@@ -127,3 +124,21 @@ ggplot(data = rates_df, aes(x = idx, y = rate, color = ratetype)) +
   guides(color=guide_legend(title=NULL))
 
 ggsave('vis/Vasicekperformance.pdf')
+
+# total transaction costs as function of alpha.
+vasicekagg <- aggregate(full_df$vasicekbased, by=list(Alpha=full_df$alpha), FUN=sum)
+vasicekagg$type <- 'Vasicek Based'
+dataagg <- aggregate(full_df$databased, by=list(Alpha=full_df$alpha), FUN=sum)
+dataagg$type <- 'Data Based'
+agg_df <- rbind(vasicekagg,dataagg)
+agg_df$Alpha <- as.numeric(agg_df$Alpha)
+
+ggplot(data = agg_df, aes(x = Alpha, y = x, color = type)) +
+  geom_line() +
+  xlab('Alpha level') +
+  ylab('Total transaction costs') +
+  ggtitle('Transaction costs at different Alpha levels') +
+  guides(color=guide_legend(title=NULL))
+  
+ggsave('vis/TransactioncostsAlpha.pdf')
+
