@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 import my_immunization as im
 import portfoliofuns as pf
+import bond_project_funs as bpf
 from datetime import timedelta
 
 #%% Generating a random portfolio over a planning horizon of 10 years
@@ -27,14 +28,14 @@ Duration_L = np.zeros(N)
 startdate = '3/1/2006'
 enddate = '2/1/2016'
 Data = pd.read_csv("trimmed_data.csv")
+I = bpf.prepareData(Data,startdate,enddate)
 Data = Data.as_matrix()
 Data = Data[148:, 2:11]
-Data = pd.DataFrame(Data[:,1:], index = Data[:,0], columns = ['1.0', '3.0', '6.0',
-                    '12.0', '24.0', '36.0', '60.0', '84.0'])
+Data = pd.DataFrame(Data[:,1:], index = Data[:,0], columns = ['1.0', '3.0', '6.0', '12.0', '24.0', '36.0', '60.0', '84.0'])
 dates = pd.date_range(startdate, enddate, freq = 'BMS')
 date_strings = pd.Series(dates.format())
 I = Data.ix[date_strings]
-
+'''
 for x in np.arange(np.size(dates)):
     d = pd.Series(dates.format())
     if np.isnan(I.ix[d.ix[x]].ix[0]):
@@ -48,6 +49,7 @@ for x in np.arange(np.size(dates)):
         I.ix[d.ix[x]] = Data.ix[new_string]
         I.T.columns.values[x] = new_string
 I = I/100
+'''
 monthly_rates = im.my_monthly_effective_rate(I)
 
 #%% Creating liabilities and computing transaction costs for Vasicek and normal
@@ -87,6 +89,11 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
     gamma = alpha #function of alpha to translate risk tolerance
     
     # loop for FIRST MONTH ONLY in order to set liabilities
+    transaction, Liability_number, Portfolio_L = bpf.firstMonth(N,Type,
+               possible_types,considered,coupon_rate,max_months,
+               monthly_rates,Portfolio_A,Portfolio_L,transaction_cost,I,
+               LType,Liability_number,transaction)
+    '''
     for y in np.arange(N):
         if Type[y] == 1:
             continue
@@ -118,6 +125,7 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
         
         transaction[y] = transaction_cost*(net + acquisition)
     #FOR first transaction end    
+    '''
     VLiability_number = Liability_number.copy()
     Transaction[0] = np.sum(transaction)
     VTransaction[0] = np.sum(transaction)
@@ -125,6 +133,11 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
     
     
     # loop for ALL OTHER MONTHS
+    Transaction, VTransaction, Vasicek = bpf.otherMonth(max_months,Portfolio_A,
+               Portfolio_L,N,I,considered,Vasicek,monthly_rates,Type,
+               Coupons_per_year,gamma,LType,Liability_number,transaction_cost,
+               Transaction,VLiability_number,VTransaction)
+    '''
     for x in np.arange(1,max_months):
         newPortfolio_A = np.delete(Portfolio_A, np.arange(x-1), axis = 1)
         newPortfolio_L = np.delete(Portfolio_L, np.arange(x-1), axis = 1)
@@ -237,15 +250,17 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
         #FOR vtransaction end
         VTransaction[x] = np.sum(vtransaction)            
         considered = considered + 1
-    #FOR x end        
+    #FOR x end 
+    '''       
     data = [Transaction, VTransaction]
-#    print(data)
+    print(data)
     index = ['Data Based','Vasicek Based']
     TransactionDF = pd.DataFrame(data, index)
     InterestPanel = pd.Panel(data = {'Data Rates' :monthly_rates.ix[36:], 
                                      'Vasicek Rates' : Vasicek})
     AlphaPanel.ix[alpha] = TransactionDF
 #FOR ALPHA end
+
 '''    
 for x in np.linspace(0.1, 1.0, num = 10):
     df = AlphaPanel.ix[x]
