@@ -70,43 +70,7 @@ Vasicek = I.ix[considered:].copy()
 Vasicek.ix[0] = im.my_vasicek(I,considered)
 Vasicek.ix[0] = im.my_monthly_effective_rate(Vasicek.ix[0])
     
-# loop for FIRST MONTH ONLY in order to set liabilities
-for y in np.arange(N):
-    if Type[y] == 1:
-        continue
-    pt = possible_types.copy()
-    choice = pt[possible_types <= Type[y]][-1]
-    LType[y] = choice
-        
-    liability_interest = im.my_extract_rates(I,choice)
-    LI = liability_interest[considered-1]
-    LI = im.my_monthly_effective_rate(LI)
-    li = np.random.uniform(0.01, 0.1)
-    cr = coupon_rate[coupon_rate <= choice]
-    ncp = cr[np.random.randint(np.size(cr))]
-    Portfolio_L[y] = im.my_bond_generator(max_months, choice, 1, li, ncp)
-        
-    asset_rate = im.my_extract_rates(monthly_rates, Type[y])
-    asset_rate = asset_rate[considered-1]
-        
-    macD_A = im.my_macD(Portfolio_A[y],asset_rate)
-    macD_A = 12*macD_A
-    macD_L = im.my_macD(Portfolio_L[y], LI)
-    macD_L = 12*macD_L
-    PVA = im.my_present_value(Portfolio_A[y], asset_rate)
-    PVL = im.my_present_value(Portfolio_L[y], LI)
-        
-    Liability_number[y] = (macD_A*PVA/(1+asset_rate))/(macD_L*PVL/(1+LI))
-    net = PVA - Liability_number[y]*PVL
-    acquisition = Liability_number[y]*PVL
-        
-    transaction[y] = transaction_cost*(net + acquisition)
-    
-VLiability_number = Liability_number.copy()
-Transaction[0] = np.sum(transaction)
-VTransaction[0] = np.sum(transaction)
-considered = considered +1
-        
+      
 #%% Computing transactions costs for all other months using both Vasicek and
 # the given data
 
@@ -122,6 +86,44 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
     print alpha
     gamma = alpha #function of alpha to translate risk tolerance
     
+    # loop for FIRST MONTH ONLY in order to set liabilities
+    for y in np.arange(N):
+        if Type[y] == 1:
+            continue
+        pt = possible_types.copy()
+        choice = pt[possible_types <= Type[y]][-1]
+        LType[y] = choice
+        
+        liability_interest = im.my_extract_rates(I,choice)
+        LI = liability_interest[considered-1]
+        LI = im.my_monthly_effective_rate(LI)
+        li = np.random.uniform(0.01, 0.1)
+        cr = coupon_rate[coupon_rate <= choice]
+        ncp = cr[np.random.randint(np.size(cr))]
+        Portfolio_L[y] = im.my_bond_generator(max_months, choice, 1, li, ncp)
+        
+        asset_rate = im.my_extract_rates(monthly_rates, Type[y])
+        asset_rate = asset_rate[considered-1]
+        
+        macD_A = im.my_macD(Portfolio_A[y],asset_rate)
+        macD_A = 12*macD_A
+        macD_L = im.my_macD(Portfolio_L[y], LI)
+        macD_L = 12*macD_L
+        PVA = im.my_present_value(Portfolio_A[y], asset_rate)
+        PVL = im.my_present_value(Portfolio_L[y], LI)
+        
+        Liability_number[y] = (macD_A*PVA/(1+asset_rate))/(macD_L*PVL/(1+LI))
+        net = PVA - Liability_number[y]*PVL
+        acquisition = Liability_number[y]*PVL
+        
+        transaction[y] = transaction_cost*(net + acquisition)
+    #FOR first transaction end    
+    VLiability_number = Liability_number.copy()
+    Transaction[0] = np.sum(transaction)
+    VTransaction[0] = np.sum(transaction)
+    considered = considered +1
+    
+    
     # loop for ALL OTHER MONTHS
     for x in np.arange(1,max_months):
         newPortfolio_A = np.delete(Portfolio_A, np.arange(x-1), axis = 1)
@@ -133,7 +135,7 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
 
         Vasicek.ix[x] = im.my_vasicek(I,considered)
         Vasicek.ix[x] = im.my_monthly_effective_rate(Vasicek.ix[x])
-        
+       
         ExpectedChange = np.zeros(N)
         VExpectedChange = np.zeros(N)
         
@@ -152,7 +154,7 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
             
             ExpectedChange[y] = diff*im.my_Price_Change(newPortfolio_A[y],asset_rate, Coupons_per_year[y])
             VExpectedChange[y] = vdiff*im.my_Price_Change(newPortfolio_A[y], vasset_rate, Coupons_per_year[y])
-        
+        #FOR expected end     
         maxChange = np.max(ExpectedChange)
         vmaxChange = np.max(VExpectedChange)
         
@@ -189,7 +191,7 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
                 new_Liability_number[y] = (macD_A*PVA/(1+asset_rate))/(macD_L*PVL/(1+LI))
                 net = PVA - np.abs(new_Liability_number[y] - Liability_number[y])*PVL
                 acquisition = np.abs(new_Liability_number[y] - Liability_number[y])*PVL
-        
+        #FOR transaction end        
                 transaction[y] = transaction_cost*(net + acquisition)
                 Liability_number[y] = new_Liability_number[y]
         
@@ -232,20 +234,22 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
         
                 vtransaction[y] = transaction_cost*(net + acquisition)
                 VLiability_number[y] = new_VLiability_number[y]
-            
-        VTransaction[x] = np.sum(vtransaction)
-            
+        #FOR vtransaction end
+        VTransaction[x] = np.sum(vtransaction)            
         considered = considered + 1
+    #FOR x end        
     data = [Transaction, VTransaction]
     index = ['Data Based','Vasicek Based']
     TransactionDF = pd.DataFrame(data, index)
     InterestPanel = pd.Panel(data = {'Data Rates' :monthly_rates.ix[36:], 
                                      'Vasicek Rates' : Vasicek})
     AlphaPanel.ix[alpha] = TransactionDF
-    
+#FOR ALPHA end
+'''    
 for x in np.linspace(0.1, 1.0, num = 10):
     df = AlphaPanel.ix[x]
     df.to_csv('Alpha=%s.csv' %x)
 
 InterestPanel.ix['Data Rates'].to_csv('Data_Rates.csv')
 InterestPanel.ix['Vasicek Rates'].to_csv('Vasicek_Rates.csv')
+'''
