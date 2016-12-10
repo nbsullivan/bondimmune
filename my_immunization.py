@@ -86,10 +86,22 @@ def my_portfolio_generator(N, max_months):
     Coupons_per_year = np.zeros(N)
     Interest = np.zeros(N)
     P = np.zeros((N,max_months))
-    r = np.arange(N)
     Type = np.zeros(N)
     
-    for x in r:
+    # loop to guarantee one of each bond type in order
+    for x in np.arange(0,8):
+        i = np.random.uniform(0.01, 0.1)
+        Interest[x] = i
+        tipe = possible_duration[x]
+        Type[x] = tipe
+        cr = coupon_rate[coupon_rate <= tipe]
+        ncp = cr[np.random.randint(np.size(cr))]
+        
+        Coupons_per_year[x] = ncp
+        P[x] = im.my_bond_generator(max_months, tipe, 1,i,ncp)
+    
+    # loop to randomize the rest of the portfolio
+    for x in np.arange(8,N):
         i = np.random.uniform(0.01, 0.1)
         Interest[x] = i
         possible_duration = possible_duration[possible_duration <= max_months]
