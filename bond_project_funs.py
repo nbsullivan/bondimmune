@@ -140,6 +140,22 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
         maxChange = np.max(ExpectedChange)
         vmaxChange = np.max(VExpectedChange)
         
+        # Skip index for krd
+        use = np.arange(N)
+        index = np.ones(N)
+        vuse = np.arange(N)
+        vindex = np.ones(N)
+        
+        for y in np.arange(N):
+            if (gamma*maxChange >= ExpectedChange[y]):
+                index[y] = 1
+            elif (gamma*vmaxChange >= VExpectedChange[y]):
+                vindex[y] = 1
+        
+        use = use[index==1]
+        vuse = vuse[index==1]
+        
+        
         # Calculate transaciton costs based on data
         for y in np.arange(N):
             if (gamma*maxChange >= ExpectedChange[y]):
