@@ -76,7 +76,7 @@ AlphaPanel = pd.Panel(data = {0.1 : FirstDF, 0.2 : FirstDF, 0.3 : FirstDF,
 for alpha in np.linspace(0.1, 1.0, num = 10):
     considered = 37
     print alpha
-    gamma = np.sqrt(alpha)
+    gamma = np.power(alpha,2)
 
     
     
@@ -103,7 +103,7 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
 #%% Writing to CSV    
 for x in np.linspace(0.1, 1.0, num = 10):
     df = AlphaPanel.ix[x]
-    df.to_csv('sqrtGamma_Alpha=%s.csv' %x)
+    df.to_csv('pow2Gamma_Alpha=%s.csv' %x)
 
-InterestPanel.ix['Data Rates'].to_csv('sqrtGamma_Data_Rates.csv')
-InterestPanel.ix['Vasicek Rates'].to_csv('sqrtGamma_Vasicek_Rates.csv')
+InterestPanel.ix['Data Rates'].to_csv('pow2Gamma_Data_Rates.csv')
+InterestPanel.ix['Vasicek Rates'].to_csv('pow2Gamma_Vasicek_Rates.csv')

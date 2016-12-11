@@ -126,6 +126,7 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
                Transaction_krd,Portfolio_L_krd,VTransaction_krd,
                VLiability_number_krd,K):
     NL = K.size+1;                          # one more than key rate durations
+    print(gamma)
     # loop for ALL OTHER MONTHS
     for x in np.arange(1,max_months):
         
@@ -191,6 +192,8 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
                        interp_rates,K,Portfolio_A,use,Qa,transaction_cost)
         else:
             print('KRD (data): No immunization required...')
+            print('Month:')
+            print(x)
             transaction_krd = 0         # and leave Liability_number_krd alone 
         Transaction_krd[x] = np.sum(transaction_krd)
         
@@ -216,6 +219,8 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
                            interp_rates,K,Portfolio_A,vuse,Qa,transaction_cost)
         else:
             print('KRD (Vasicek): No immunization required...')
+            print('Month:')
+            print(x)
             vtransaction_krd = 0       # and leave VLiability_number_krd alone
         VTransaction_krd[x] = np.sum(vtransaction_krd)
 
