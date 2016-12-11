@@ -312,7 +312,7 @@ def immunize_solve(A,b,x0):
     method = 'SLSQP'
     res  = sp.optimize.minimize(func,x0,method=method,
                                 constraints=cons,bounds=bons,
-                                options={'disp': True})
+                                options={'disp': False})
     x = res.x  
     err = res.fun
     return x, err

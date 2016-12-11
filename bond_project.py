@@ -95,8 +95,8 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
     InterestPanel = pd.Panel(data = {'Data Rates' :monthly_rates.ix[36:], 
                                      'Vasicek Rates' : Vasicek})
     AlphaPanel.ix[alpha] = TransactionDF
-    print(TransactionDF)
-    print(AlphaPanel)
+#    print(TransactionDF)
+#    print(AlphaPanel)
 #FOR ALPHA end
 
 
