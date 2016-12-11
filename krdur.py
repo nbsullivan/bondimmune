@@ -273,7 +273,7 @@ def immunize(Pa,Y,Qa,Pl,K,w0='null',r=0.5):
     """
     N = nbonds(Pl)                    # number of bonds in liability portfolio
     if w0 == 'null':
-        w0 = np.zeros(N)     
+        w0 = (1./N)*np.ones(N)     
     
     KRDa,PVa = portfolio(Pa,Y,Qa,K)                 # obtain key rate and PV's
     
@@ -297,13 +297,12 @@ def immunize(Pa,Y,Qa,Pl,K,w0='null',r=0.5):
     return q, err, w
         
     
-    
         
 def immunize_solve(A,b,x0):
     """Solves KRD-matching system (weight formulation)"""
     
     # Consider adjusting order of norm...
-    ord = 1;
+    ord = 2;
     func = lambda x : np.linalg.norm(np.dot(A,x)-b, ord=ord)
        
     cons = {'type':'eq', 'fun': lambda x: x.sum()-1 }  # weights must sum to 1
@@ -313,7 +312,7 @@ def immunize_solve(A,b,x0):
     method = 'SLSQP'
     res  = sp.optimize.minimize(func,x0,method=method,
                                 constraints=cons,bounds=bons,
-                                options={'disp': False})
+                                options={'disp': True})
     x = res.x  
     err = res.fun
     return x, err
