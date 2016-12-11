@@ -79,23 +79,40 @@ def firstMonth(N,Type,possible_types,considered,coupon_rate,max_months,
         acquisition = Liability_number[y]*PVL
         
         transaction[y] = transaction_cost*(net + acquisition)
+    
         
+    # Skip index for krd
+    use = np.arange(N)
+    index = np.ones(N)
+    vuse = np.arange(N)
+    vindex = np.ones(N)
+        
+    for y in np.arange(N):
+        if (Type[y] != 1):
+            index[y] = 1
+        elif (Type[y] != 1):
+            vindex[y] = 1
+        
+    use = use[index==1]
+    vuse = vuse[vindex==1]
+
     # KRD computation
     NL = K.size+1;                           # one more than key rate durations
     ''' Need a better way to grab appropriate liability portfolio'''
     ''' Limit to one type each, limit to assets that were not skipped '''
     Portfolio_L_krd = Portfolio_L[0:NL]
     interp_rates = krd.rateinterp(monthly_rates,considered,max_months)   # krd
-    Qa = np.ones(krd.nbonds(Portfolio_A))
-    N2short,err,w = krd.immunize(Portfolio_A,interp_rates,Qa,Portfolio_L_krd,K)
+    Qa = np.ones(krd.nbonds(Portfolio_A[use]))
+    N2short,err,w = krd.immunize(Portfolio_A[use],interp_rates,Qa,Portfolio_L_krd,K)
     Liability_number_krd = np.negative(N2short)
     
     transaction_krd = np.zeros(transaction.shape)
-    transaction_krd[NL] = krd.portfolio(Portfolio_A[NL:],interp_rates,Qa[NL:],K)[1]
+    acquisition_krd = np.zeros(transaction.shape)
+    #transaction_krd[NL] = krd.portfolio(Portfolio_A[NL:],interp_rates,Qa[NL:],K)[1]
     for y in np.arange(NL):
-        acquisition_krd = Liability_number_krd[y]*krd.bond(Portfolio_L_krd[y],interp_rates,K)[1]
-        net_krd = krd.bond(Portfolio_A[y],interp_rates,K)[1] - acquisition_krd        
-        transaction_krd[y] = transaction_cost*(net_krd + acquisition_krd)
+        acquisition_krd[y] = Liability_number_krd[y]*krd.bond(Portfolio_L_krd[y],interp_rates,K)[1]
+    net_krd = krd.portfolio(Portfolio_A[use],interp_rates,Qa,K)[1] - np.sum(acquisition_krd)      
+    transaction_krd = transaction_cost*(net_krd + np.sum(acquisition_krd))        
     
     return transaction, Liability_number, Portfolio_L, transaction_krd, Liability_number_krd, Portfolio_L_krd
     
@@ -140,21 +157,6 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
         maxChange = np.max(ExpectedChange)
         vmaxChange = np.max(VExpectedChange)
         
-        # Skip index for krd
-        use = np.arange(N)
-        index = np.ones(N)
-        vuse = np.arange(N)
-        vindex = np.ones(N)
-        
-        for y in np.arange(N):
-            if (gamma*maxChange >= ExpectedChange[y]):
-                index[y] = 1
-            elif (gamma*vmaxChange >= VExpectedChange[y]):
-                vindex[y] = 1
-        
-        use = use[index==1]
-        vuse = vuse[vindex==1]
-        
         
         # Calculate transaciton costs based on data
         for y in np.arange(N):
@@ -195,22 +197,44 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
         #FOR transaction end        
         Transaction[x] = np.sum(transaction)
         
-        # KRD computation
-        NL = K.size+1;                           # one more than key rate durations
+        
+        # Skip index for krd
+        use = np.arange(N)
+        index = np.ones(N)
+        vuse = np.arange(N)
+        vindex = np.ones(N)
+        
+        for y in np.arange(N):
+            if (gamma*maxChange >= ExpectedChange[y]) & (Type[y] != 1):
+                index[y] = 1
+            elif (gamma*vmaxChange >= VExpectedChange[y]) & (Type[y] != 1):
+                vindex[y] = 1
+        
+        use = use[index==1]
+        vuse = vuse[vindex==1]
+        
+        
+        # KRD computation (data)
+        NL = K.size+1;                      # one more than key rate durations
+        new_Liability_number_krd = np.zeros(NL)
         ''' Need a better way to grab appropriate liability portfolio'''
         ''' Limit to one type each, limit to assets that were not skipped '''
         Portfolio_L_krd = Portfolio_L[0:NL]
         interp_rates = krd.rateinterp(monthly_rates,considered,max_months)   # krd
-        Qa = np.ones(krd.nbonds(Portfolio_A))
-        N2short,err,w = krd.immunize(Portfolio_A,interp_rates,Qa,Portfolio_L_krd,K)
+        Qa = np.ones(krd.nbonds(Portfolio_A[use]))
+        N2short,err,w = krd.immunize(Portfolio_A[use],interp_rates,Qa,Portfolio_L_krd,K)
         new_Liability_number_krd = np.negative(N2short)
     
         transaction_krd = np.zeros(transaction.shape)
-        transaction_krd[NL] = krd.portfolio(Portfolio_A[NL:],interp_rates,Qa[NL:],K)[1]
+        acquisition_krd = np.zeros(transaction.shape)
+        #transaction_krd[NL] = krd.portfolio(Portfolio_A[NL:],interp_rates,Qa[NL:],K)[1]
         for y in np.arange(NL):
-            acquisition_krd = np.abs(new_Liability_number_krd[y]-Liability_number_krd[y])*krd.bond(Portfolio_L_krd[y],interp_rates,K)[1]
-            net_krd = krd.bond(Portfolio_A[y],interp_rates,K)[1] - acquisition_krd        
-            transaction_krd[y] = transaction_cost*(net_krd + acquisition_krd)
+            acquisition_krd[y] = np.abs(new_Liability_number_krd[y]-Liability_number_krd[y])*krd.bond(Portfolio_L_krd[y],interp_rates,K)[1]
+        net_krd = krd.portfolio(Portfolio_A[use],interp_rates,Qa,K)[1] - np.sum(acquisition_krd)        
+        
+        transaction_krd = transaction_cost*(net_krd + np.sum(acquisition_krd))
+        Liability_number_krd = new_Liability_number_krd
+        
         Transaction_krd[x] = np.sum(transaction_krd)
         
         
@@ -263,16 +287,17 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
         '''Is this correct to get new?'''
         Portfolio_L_krd = Portfolio_L[0:NL] 
         interp_rates = krd.rateinterp(monthly_rates,considered,max_months)   # krd
-        Qa = np.ones(krd.nbonds(Portfolio_A))
-        N2short,err,w = krd.immunize(Portfolio_A,interp_rates,Qa,Portfolio_L_krd,K)
+        Qa = np.ones(krd.nbonds(Portfolio_A[vuse]))
+        N2short,err,w = krd.immunize(Portfolio_A[vuse],interp_rates,Qa,Portfolio_L_krd,K)
         new_VLiability_number_krd = np.negative(N2short)
     
         vtransaction_krd = np.zeros(vtransaction.shape)
-        vtransaction_krd[NL] = krd.portfolio(Portfolio_A[NL:],interp_rates,Qa[NL:],K)[1]
+        acquisition_krd = np.zeros(transaction.shape)
+        #vtransaction_krd[NL] = krd.portfolio(Portfolio_A[NL:],interp_rates,Qa[NL:],K)[1]
         for y in np.arange(NL):
-            acquisition_krd = np.abs(new_VLiability_number_krd[y]-VLiability_number_krd[y])*krd.bond(Portfolio_L_krd[y],interp_rates,K)[1]
-            net_krd = krd.bond(Portfolio_A[y],interp_rates,K)[1] - acquisition_krd        
-            vtransaction_krd[y] = transaction_cost*(net_krd + acquisition_krd)
+            acquisition_krd[y] = np.abs(new_VLiability_number_krd[y]-VLiability_number_krd[y])*krd.bond(Portfolio_L_krd[y],interp_rates,K)[1]
+        net_krd = krd.portfolio(Portfolio_A[vuse],interp_rates,Qa,K)[1] - np.sum(acquisition_krd)       
+        vtransaction_krd = transaction_cost*(net_krd + np.sum(acquisition_krd))
         VTransaction_krd[x] = np.sum(vtransaction_krd)
 
         

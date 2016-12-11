@@ -15,7 +15,7 @@ from datetime import timedelta
 #%% Generating a random portfolio over a planning horizon of 10 years
 
 max_months = 84
-N = np.random.randint(20, 51)
+N = 100 #np.random.randint(20, 51)
 possible_types = np.array([1.0, 3.0, 6.0, 12.0, 24.0, 36.0, 60.0, 84.0])
 K = np.array([1, 3, 6, 12, 24, 36, 60, 84])                    # set key rates
 coupon_rate = np.array([1, 3, 4, 6, 12])
