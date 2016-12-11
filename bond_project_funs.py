@@ -149,6 +149,9 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
        
         # Find the maximum expected change in price based on data as well as
         # Vasicek estimate
+        ExpectedChange, VExpectedChange = expectedChange(N,Type,considered,Coupons_per_year,monthly_rates,
+                   newPortfolio_A,Vasicek,x,ExpectedChange,VExpectedChange)
+        '''
         for y in np.arange(N):
             asset_rate = im.my_extract_rates(monthly_rates, Type[y])
             old_asset_rate = asset_rate[considered-2]
@@ -162,7 +165,8 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
             
             ExpectedChange[y] = diff*im.my_Price_Change(newPortfolio_A[y],asset_rate, Coupons_per_year[y])
             VExpectedChange[y] = vdiff*im.my_Price_Change(newPortfolio_A[y], vasset_rate, Coupons_per_year[y])
-        #FOR expected end     
+        #FOR expected end 
+        '''
         maxChange = np.max(ExpectedChange)
         vmaxChange = np.max(VExpectedChange)
         
@@ -171,46 +175,7 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
         transaction, Liability_number = transactionCost(N,gamma,maxChange,
                     ExpectedChange,transaction,Type,I,LType,considered,
                     monthly_rates,newPortfolio_A,newPortfolio_L,
-                    transaction_cost,Liability_number,x,'L')
-        '''
-        for y in np.arange(N):
-            if (gamma*maxChange >= ExpectedChange[y]):
-                transaction[y] = 0
-                continue
-            else:
-                if (Type[y] == 1):
-                    transaction[y] = 0
-                    continue
-                liability_interest = im.my_extract_rates(I,LType[y])
-                LI = liability_interest[considered-1]
-                LI = im.my_monthly_effective_rate(LI)
-                asset_rate = im.my_extract_rates(monthly_rates, Type[y])
-                asset_rate = asset_rate[considered-1]
-                
-                PVA = im.my_present_value(newPortfolio_A[y], asset_rate)
-                PVL = im.my_present_value(newPortfolio_L[y], LI)
-                
-                if (PVA == 0):
-                    transaction[y] = 0
-                    continue
-        
-                macD_A = im.my_macD(newPortfolio_A[y],asset_rate)
-                macD_A = 12*macD_A
-                macD_L = im.my_macD(newPortfolio_L[y], LI)
-                macD_L = 12*macD_L
-                
-                if (macD_L == 0):
-                    transaction[y] = 0
-                    continue
-        
-                new_Liability_number[y] = (macD_A*PVA/(1+asset_rate))/(macD_L*PVL/(1+LI))
-                net = np.abs(PVA - new_Liability_number[y]*PVL)
-                acquisition = np.abs(new_Liability_number[y] - Liability_number[y])*PVL
-        
-                transaction[y] = transaction_cost*(net + acquisition)
-                Liability_number[y] = new_Liability_number[y]
-        #FOR transaction end
-        '''        
+                    transaction_cost,Liability_number,x,'L')    
         Transaction[x] = np.sum(transaction)
         
         
@@ -276,46 +241,8 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
                     VExpectedChange,vtransaction,Type,Vasicek,LType,considered,
                     monthly_rates,newPortfolio_A,newPortfolio_L,
                     transaction_cost,VLiability_number,x,'V')
-        '''
-        for y in np.arange(N):
-            if (gamma*vmaxChange >= VExpectedChange[y]):
-                vtransaction[y] = 0
-                continue
-            else:
-                if (Type[y] == 1):
-                    vtransaction[y] = 0
-                    continue
-                liability_interest = im.my_extract_rates(Vasicek,LType[y])
-                LI = liability_interest[x]
-
-                asset_rate = im.my_extract_rates(Vasicek, Type[y])
-                asset_rate = asset_rate[x]
-                
-                PVA = im.my_present_value(newPortfolio_A[y], asset_rate)
-                PVL = im.my_present_value(newPortfolio_L[y], LI)
-                
-                if (PVA == 0):
-                    vtransaction[y] = 0
-                    continue
+        VTransaction[x] = np.sum(vtransaction)  
         
-                macD_A = im.my_macD(newPortfolio_A[y],asset_rate)
-                macD_A = 12*macD_A
-                macD_L = im.my_macD(newPortfolio_L[y], LI)
-                macD_L = 12*macD_L
-                
-                if (macD_L == 0):
-                    vtransaction[y] = 0
-                    continue
-                
-                new_VLiability_number[y] = (macD_A*PVA/(1+asset_rate))/(macD_L*PVL/(1+LI))
-                net = np.abs(PVA - new_VLiability_number[y]*PVL)
-                acquisition = np.abs(new_VLiability_number[y] - VLiability_number[y])*PVL
-        
-                vtransaction[y] = transaction_cost*(net + acquisition)
-                VLiability_number[y] = new_VLiability_number[y]
-        #FOR vtransaction end
-        '''
-        VTransaction[x] = np.sum(vtransaction)    
 
         # KRD computation
         interp_rates = krd.rateinterp(Vasicek,considered-37,max_months)   # krd
@@ -343,6 +270,8 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
     return Transaction, VTransaction, Vasicek, Transaction_krd, VTransaction_krd
 
     
+
+
     
 def transactionCost(N,gamma,maxChange,ExpectedChange,transaction,Type,I,LType,
                     considered,monthly_rates,newPortfolio_A,newPortfolio_L,
@@ -388,42 +317,24 @@ def transactionCost(N,gamma,maxChange,ExpectedChange,transaction,Type,I,LType,
             transaction[y] = transaction_cost*(net + acquisition)
             Liability_number[y] = new_Liability_number[y]
     return transaction, Liability_number
+
     
-'''
-        for y in np.arange(N):
-            if (gamma*maxChange >= ExpectedChange[y]):
-                transaction[y] = 0
-                continue
-            else:
-                if (Type[y] == 1):
-                    transaction[y] = 0
-                    continue
-                liability_interest = im.my_extract_rates(I,LType[y])
-                LI = liability_interest[considered-1]
-                LI = im.my_monthly_effective_rate(LI)
-                asset_rate = im.my_extract_rates(monthly_rates, Type[y])
-                asset_rate = asset_rate[considered-1]
-                
-                PVA = im.my_present_value(newPortfolio_A[y], asset_rate)
-                PVL = im.my_present_value(newPortfolio_L[y], LI)
-                
-                if (PVA == 0):
-                    transaction[y] = 0
-                    continue
-        
-                macD_A = im.my_macD(newPortfolio_A[y],asset_rate)
-                macD_A = 12*macD_A
-                macD_L = im.my_macD(newPortfolio_L[y], LI)
-                macD_L = 12*macD_L
-                
-                if (macD_L == 0):
-                    transaction[y] = 0
-                    continue
-        
-                new_Liability_number[y] = (macD_A*PVA/(1+asset_rate))/(macD_L*PVL/(1+LI))
-                net = np.abs(PVA - new_Liability_number[y]*PVL)
-                acquisition = np.abs(new_Liability_number[y] - Liability_number[y])*PVL
-        
-                transaction[y] = transaction_cost*(net + acquisition)
-                Liability_number[y] = new_Liability_number[y]
-'''
+    
+    
+    
+def expectedChange(N,Type,considered,Coupons_per_year,monthly_rates,
+                   newPortfolio_A,Vasicek,x,ExpectedChange,VExpectedChange):    
+    for y in np.arange(N):
+        asset_rate = im.my_extract_rates(monthly_rates, Type[y])
+        old_asset_rate = asset_rate[considered-2]
+        asset_rate = asset_rate[considered-1]
+        diff = np.absolute(old_asset_rate - asset_rate)
+            
+        vasset_rate = im.my_extract_rates(Vasicek,Type[y])
+        old_vasset_rate = vasset_rate[x-1]
+        vasset_rate = vasset_rate[x]
+        vdiff = np.absolute(old_vasset_rate - vasset_rate)
+            
+        ExpectedChange[y] = diff*im.my_Price_Change(newPortfolio_A[y],asset_rate, Coupons_per_year[y])
+        VExpectedChange[y] = vdiff*im.my_Price_Change(newPortfolio_A[y], vasset_rate, Coupons_per_year[y])
+    return ExpectedChange, VExpectedChange
