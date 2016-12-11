@@ -67,7 +67,7 @@ ggsave('vis/ag_yield_curve_alt.pdf')
 
 files = list.files(pattern="*.csv")
 
-full_df <- data.frame(idx = numeric(0), databased = numeric(0), vasicekbased = numeric(0))
+full_df <- data.frame(idx = numeric(0), databased = numeric(0), vasicekbased = numeric(0), krddata = numeric(0), krdvasicek = numeric(0))
 rates_df <- data.frame(idx = numeric(0), ratetype = character(0), rate = numeric(0))
 for(fil in files){
   
@@ -78,27 +78,39 @@ for(fil in files){
     df <- read.csv(fil, header=FALSE)
     df <- t(df)
     df <- df[-c(1),]
+
     
     # setting up new columns as numerics and alpha
     alpha <- substr(fil, 7,nchar(fil)-4)
     col1 <- as.numeric(df[,1])
     col2 <- as.numeric(df[,2])
     col3 <- as.numeric(df[,3])
-    
+    col4 <- as.numeric(df[,4])
+    col5 <- as.numeric(df[,5])
+
     # load data into full_df
-    new_df <- data.frame(idx = col1, databased = col2, vasicekbased = col3, alpha = alpha)
+    new_df <- data.frame(idx = col1, databased = col2, vasicekbased = col3, krddata = col4, krdvasicek = col5, alpha = alpha)
     new_df$alpha <- alpha
     full_df <- rbind(full_df,new_df)
     
     # plot transaction costs.
     ggplot(data = new_df, aes(x = idx)) +
-      geom_line(aes(y = vasicekbased, color = "Vasicek Based")) +
-      geom_line(aes(y = databased, color = "Data Based")) +
+      geom_line(aes(y = vasicekbased, color = "Duration Matching")) +
+      geom_line(aes(y = krdvasicek, color = "Key Rate Duration")) +
       guides(color=guide_legend(title=NULL)) +
       xlab('Months') +
       ylab('Transaction Costs') +
-      ggtitle(paste('Transaction Costs at Alpha = ', alpha))
-    ggsave(paste('vis/alpha',alpha,'.pdf', sep = ''))
+      ggtitle(paste('Data based transaction costs, Alpha = ', alpha))
+    ggsave(paste('vis/alphavasicek',alpha,'.pdf', sep = ''))
+    
+    ggplot(data = new_df, aes(x = idx)) +
+      geom_line(aes(y = databased, color = "Duration Matching")) +
+      geom_line(aes(y = krddata, color = "Key Rate Duration")) +
+      guides(color=guide_legend(title=NULL)) +
+      xlab('Months') +
+      ylab('Transaction Costs') +
+      ggtitle(paste('Vasicek based transaction costs, Alpha = ', alpha))
+    ggsave(paste('vis/alphadata',alpha,'.pdf', sep = ''))
     
   }
   if(grepl('Rates',fil)){
@@ -126,19 +138,35 @@ ggplot(data = rates_df, aes(x = idx, y = rate, color = ratetype)) +
 ggsave('vis/Vasicekperformance.pdf')
 
 # total transaction costs as function of alpha.
-vasicekagg <- aggregate(full_df$vasicekbased, by=list(Alpha=full_df$alpha), FUN=sum)
-vasicekagg$type <- 'Vasicek Based'
-dataagg <- aggregate(full_df$databased, by=list(Alpha=full_df$alpha), FUN=sum)
-dataagg$type <- 'Data Based'
-agg_df <- rbind(vasicekagg,dataagg)
-agg_df$Alpha <- as.numeric(agg_df$Alpha)
+vasicekaggmatch <- aggregate(full_df$vasicekbased, by=list(Alpha=full_df$alpha), FUN=sum)
+vasicekaggmatch$type <- 'Vasicek'
+dataaggmatch <- aggregate(full_df$databased, by=list(Alpha=full_df$alpha), FUN=sum)
+dataaggmatch$type <- 'Data'
+vasicekaggkrd <- aggregate(full_df$krdvasicek, by=list(Alpha=full_df$alpha), FUN=sum)
+vasicekaggkrd$type <- 'Vasicek'
+dataaggkrd <- aggregate(full_df$krddata, by=list(Alpha=full_df$alpha), FUN=sum)
+dataaggkrd$type <- 'Data'
 
-ggplot(data = agg_df, aes(x = Alpha, y = x, color = type)) +
+agg_dfmatch <- rbind(vasicekaggmatch,dataaggmatch)
+agg_dfmatch$Alpha <- as.numeric(agg_dfmatch$Alpha)
+
+ggplot(data = agg_dfmatch, aes(x = Alpha, y = x, color = type)) +
   geom_line() +
   xlab('Alpha level') +
   ylab('Total transaction costs') +
-  ggtitle('Transaction costs at different Alpha levels') +
+  ggtitle('Transaction costs of Duration Matching') +
   guides(color=guide_legend(title=NULL))
-  
-ggsave('vis/TransactioncostsAlpha.pdf')
 
+ggsave('vis/TransactioncostsAlphaMatching.pdf')
+
+agg_dfkrd <- rbind(vasicekaggkrd,dataaggkrd)
+agg_dfkrd$Alpha <- as.numeric(agg_dfkrd$Alpha)
+
+ggplot(data = agg_dfkrd, aes(x = Alpha, y = x, color = type)) +
+  geom_line() +
+  xlab('Alpha level') +
+  ylab('Total transaction costs') +
+  ggtitle('Transaction costs of KRD') +
+  guides(color=guide_legend(title=NULL))
+
+ggsave('vis/TransactioncostsAlphaKRD.pdf')
