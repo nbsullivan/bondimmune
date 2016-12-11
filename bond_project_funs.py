@@ -75,7 +75,7 @@ def firstMonth(N,Type,possible_types,considered,coupon_rate,max_months,
         PVL = im.my_present_value(Portfolio_L[y], LI)
         
         Liability_number[y] = (macD_A*PVA/(1+asset_rate))/(macD_L*PVL/(1+LI))
-        net = PVA - Liability_number[y]*PVL
+        net = np.abs(PVA - Liability_number[y]*PVL)
         acquisition = Liability_number[y]*PVL
         
         transaction[y] = transaction_cost*(net + acquisition)
@@ -89,9 +89,9 @@ def firstMonth(N,Type,possible_types,considered,coupon_rate,max_months,
         
     for y in np.arange(N):
         if (Type[y] != 1):
-            index[y] = 1
+            index[y] = 0
         elif (Type[y] != 1):
-            vindex[y] = 1
+            vindex[y] = 0
         
     use = use[index==1]
     vuse = vuse[vindex==1]
@@ -108,11 +108,14 @@ def firstMonth(N,Type,possible_types,considered,coupon_rate,max_months,
     
     transaction_krd = np.zeros(transaction.shape)
     acquisition_krd = np.zeros(transaction.shape)
+    Lkrd = np.zeros(transaction.shape)
     #transaction_krd[NL] = krd.portfolio(Portfolio_A[NL:],interp_rates,Qa[NL:],K)[1]
     for y in np.arange(NL):
         acquisition_krd[y] = Liability_number_krd[y]*krd.bond(Portfolio_L_krd[y],interp_rates,K)[1]
-    net_krd = krd.portfolio(Portfolio_A[use],interp_rates,Qa,K)[1] - np.sum(acquisition_krd)      
-    transaction_krd = transaction_cost*(net_krd + np.sum(acquisition_krd))        
+        Lkrd[y] = Liability_number_krd[y]*krd.bond(Portfolio_L_krd[y],interp_rates,K)[1]
+    net_krd = np.abs(krd.portfolio(Portfolio_A[use],interp_rates,Qa,K)[1] - np.sum(Lkrd))   
+    
+    transaction_krd = transaction_cost*(net_krd + np.sum(acquisition_krd))  
     
     return transaction, Liability_number, Portfolio_L, transaction_krd, Liability_number_krd, Portfolio_L_krd
     
@@ -189,10 +192,10 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
                     continue
         
                 new_Liability_number[y] = (macD_A*PVA/(1+asset_rate))/(macD_L*PVL/(1+LI))
-                net = PVA - np.abs(new_Liability_number[y] - Liability_number[y])*PVL
+                net = np.abs(PVA - new_Liability_number[y]*PVL)
                 acquisition = np.abs(new_Liability_number[y] - Liability_number[y])*PVL
         
-                transaction[y] = transaction_cost*(acquisition)
+                transaction[y] = transaction_cost*(net + acquisition)
                 Liability_number[y] = new_Liability_number[y]
         #FOR transaction end        
         Transaction[x] = np.sum(transaction)
@@ -206,9 +209,9 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
         
         for y in np.arange(N):
             if (gamma*maxChange >= ExpectedChange[y]) & (Type[y] != 1):
-                index[y] = 1
+                index[y] = 0
             elif (gamma*vmaxChange >= VExpectedChange[y]) & (Type[y] != 1):
-                vindex[y] = 1
+                vindex[y] = 0
         
         use = use[index==1]
         vuse = vuse[vindex==1]
@@ -227,12 +230,14 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
     
         transaction_krd = np.zeros(transaction.shape)
         acquisition_krd = np.zeros(transaction.shape)
+        Lkrd = np.zeros(transaction.shape)
         #transaction_krd[NL] = krd.portfolio(Portfolio_A[NL:],interp_rates,Qa[NL:],K)[1]
         for y in np.arange(NL):
             acquisition_krd[y] = np.abs(new_Liability_number_krd[y]-Liability_number_krd[y])*krd.bond(Portfolio_L_krd[y],interp_rates,K)[1]
-        #net_krd = np.sum(acquisition_krd)        
+            Lkrd[y] = new_Liability_number_krd[y]*krd.bond(Portfolio_L_krd[y],interp_rates,K)[1]
+        net_krd = np.abs(krd.portfolio(Portfolio_A[use],interp_rates,Qa,K)[1] - np.sum(Lkrd)) 
         
-        transaction_krd = transaction_cost*(np.sum(acquisition_krd))
+        transaction_krd = transaction_cost*(net_krd + np.sum(acquisition_krd))
         Liability_number_krd = new_Liability_number_krd
         
         Transaction_krd[x] = np.sum(transaction_krd)
@@ -272,10 +277,10 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
                     continue
                 
                 new_VLiability_number[y] = (macD_A*PVA/(1+asset_rate))/(macD_L*PVL/(1+LI))
-                net = PVA - np.abs(new_VLiability_number[y] - VLiability_number[y])*PVL
+                net = np.abs(PVA - new_VLiability_number[y]*PVL)
                 acquisition = np.abs(new_VLiability_number[y] - VLiability_number[y])*PVL
         
-                vtransaction[y] = transaction_cost*(acquisition)
+                vtransaction[y] = transaction_cost*(net + acquisition)
                 VLiability_number[y] = new_VLiability_number[y]
         #FOR vtransaction end
         VTransaction[x] = np.sum(vtransaction)    
