@@ -192,7 +192,7 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
                 net = PVA - np.abs(new_Liability_number[y] - Liability_number[y])*PVL
                 acquisition = np.abs(new_Liability_number[y] - Liability_number[y])*PVL
         
-                transaction[y] = transaction_cost*(net + acquisition)
+                transaction[y] = transaction_cost*(acquisition)
                 Liability_number[y] = new_Liability_number[y]
         #FOR transaction end        
         Transaction[x] = np.sum(transaction)
@@ -230,9 +230,9 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
         #transaction_krd[NL] = krd.portfolio(Portfolio_A[NL:],interp_rates,Qa[NL:],K)[1]
         for y in np.arange(NL):
             acquisition_krd[y] = np.abs(new_Liability_number_krd[y]-Liability_number_krd[y])*krd.bond(Portfolio_L_krd[y],interp_rates,K)[1]
-        net_krd = krd.portfolio(Portfolio_A[use],interp_rates,Qa,K)[1] - np.sum(acquisition_krd)        
+        #net_krd = np.sum(acquisition_krd)        
         
-        transaction_krd = transaction_cost*(net_krd + np.sum(acquisition_krd))
+        transaction_krd = transaction_cost*(np.sum(acquisition_krd))
         Liability_number_krd = new_Liability_number_krd
         
         Transaction_krd[x] = np.sum(transaction_krd)
@@ -275,7 +275,7 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
                 net = PVA - np.abs(new_VLiability_number[y] - VLiability_number[y])*PVL
                 acquisition = np.abs(new_VLiability_number[y] - VLiability_number[y])*PVL
         
-                vtransaction[y] = transaction_cost*(net + acquisition)
+                vtransaction[y] = transaction_cost*(acquisition)
                 VLiability_number[y] = new_VLiability_number[y]
         #FOR vtransaction end
         VTransaction[x] = np.sum(vtransaction)    
@@ -296,8 +296,8 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
         #vtransaction_krd[NL] = krd.portfolio(Portfolio_A[NL:],interp_rates,Qa[NL:],K)[1]
         for y in np.arange(NL):
             acquisition_krd[y] = np.abs(new_VLiability_number_krd[y]-VLiability_number_krd[y])*krd.bond(Portfolio_L_krd[y],interp_rates,K)[1]
-        net_krd = krd.portfolio(Portfolio_A[vuse],interp_rates,Qa,K)[1] - np.sum(acquisition_krd)       
-        vtransaction_krd = transaction_cost*(net_krd + np.sum(acquisition_krd))
+        #net_krd = np.sum(acquisition_krd)       
+        vtransaction_krd = transaction_cost*(np.sum(acquisition_krd))
         VTransaction_krd[x] = np.sum(vtransaction_krd)
 
         
