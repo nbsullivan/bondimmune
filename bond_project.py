@@ -66,8 +66,8 @@ VTransaction[0] = np.sum(transaction)
 VTransaction_krd[0] = np.sum(transaction_krd)
 considered = considered +1
 
-FirstDF = pd.DataFrame(data = [np.zeros(max_months), np.zeros(max_months)],
-                               index = ['Data Based', 'Vasicek Based'])        
+FirstDF = pd.DataFrame(data = [np.zeros(max_months), np.zeros(max_months), np.zeros(max_months), np.zeros(max_months)],
+                               index = ['Data Based', 'Vasicek Based','Data Based (krd)','Vasicek Based (krd)'])        
 AlphaPanel = pd.Panel(data = {0.1 : FirstDF, 0.2 : FirstDF, 0.3 : FirstDF,
                               0.4 : FirstDF, 0.5 : FirstDF, 0.6 : FirstDF,
                               0.7 : FirstDF, 0.8 : FirstDF, 0.9 : FirstDF,
@@ -95,15 +95,15 @@ for alpha in np.linspace(0.1, 1.0, num = 10):
     InterestPanel = pd.Panel(data = {'Data Rates' :monthly_rates.ix[36:], 
                                      'Vasicek Rates' : Vasicek})
     AlphaPanel.ix[alpha] = TransactionDF
+    print(TransactionDF)
+    print(AlphaPanel)
 #FOR ALPHA end
 
 
-#%% Writing to CSV
-'''    
+#%% Writing to CSV    
 for x in np.linspace(0.1, 1.0, num = 10):
     df = AlphaPanel.ix[x]
     df.to_csv('Alpha=%s.csv' %x)
 
 InterestPanel.ix['Data Rates'].to_csv('Data_Rates.csv')
 InterestPanel.ix['Vasicek Rates'].to_csv('Vasicek_Rates.csv')
-'''
