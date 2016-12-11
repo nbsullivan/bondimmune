@@ -153,7 +153,7 @@ def otherMonth(max_months,Portfolio_A,Portfolio_L,N,I,considered,Vasicek,
                 vindex[y] = 1
         
         use = use[index==1]
-        vuse = vuse[index==1]
+        vuse = vuse[vindex==1]
         
         
         # Calculate transaciton costs based on data
