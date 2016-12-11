@@ -100,7 +100,7 @@ for(fil in files){
       guides(color=guide_legend(title=NULL)) +
       xlab('Months') +
       ylab('Transaction Costs') +
-      ggtitle(paste('Data based transaction costs, Alpha = ', alpha))
+      ggtitle(paste('Data based transaction costs, R = ', alpha))
     ggsave(paste('vis/alphavasicek',alpha,'.pdf', sep = ''))
     
     ggplot(data = new_df, aes(x = idx)) +
@@ -109,7 +109,7 @@ for(fil in files){
       guides(color=guide_legend(title=NULL)) +
       xlab('Months') +
       ylab('Transaction Costs') +
-      ggtitle(paste('Vasicek based transaction costs, Alpha = ', alpha))
+      ggtitle(paste('Vasicek based transaction costs, R = ', alpha))
     ggsave(paste('vis/alphadata',alpha,'.pdf', sep = ''))
     
   }
@@ -152,7 +152,7 @@ agg_dfmatch$Alpha <- as.numeric(agg_dfmatch$Alpha)
 
 ggplot(data = agg_dfmatch, aes(x = Alpha, y = x, color = type)) +
   geom_line() +
-  xlab('Alpha level') +
+  xlab('R level') +
   ylab('Total transaction costs') +
   ggtitle('Transaction costs of Duration Matching') +
   guides(color=guide_legend(title=NULL))
@@ -164,7 +164,7 @@ agg_dfkrd$Alpha <- as.numeric(agg_dfkrd$Alpha)
 
 ggplot(data = agg_dfkrd, aes(x = Alpha, y = x, color = type)) +
   geom_line() +
-  xlab('Alpha level') +
+  xlab('R level') +
   ylab('Total transaction costs') +
   ggtitle('Transaction costs of KRD') +
   guides(color=guide_legend(title=NULL))
