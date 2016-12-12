@@ -70,7 +70,7 @@ full_df <- data.frame(idx = numeric(0), databased = numeric(0), vasicekbased = n
 rates_df <- data.frame(idx = numeric(0), ratetype = character(0), rate = numeric(0))
 for(fil in files){
   
-  
+  print(fil)
   if(grepl('Alpha',fil)){
     
     # read alpha file transpose and remove header row.
@@ -96,7 +96,9 @@ for(fil in files){
     print(alpha)
     new_df$alphanum <- as.numeric(alphanum)
     full_df <- rbind(full_df,new_df)
+    
     if(nchar(fil) < 14){
+      print("ploting and saving")
       # plot transaction costs.
       ggplot(data = new_df, aes(x = idx)) +
        geom_line(aes(y = vasicekbased, color = "Duration Matching")) +
