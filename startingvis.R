@@ -93,7 +93,6 @@ for(fil in files){
     # load data into full_df
     new_df <- data.frame(idx = col1, databased = col2, vasicekbased = col3, krddata = col4, krdvasicek = col5, alpha = alpha)
     new_df$alpha <- alpha
-    print(alpha)
     new_df$alphanum <- as.numeric(alphanum)
     full_df <- rbind(full_df,new_df)
     
@@ -106,7 +105,7 @@ for(fil in files){
         guides(color=guide_legend(title=NULL)) +
        xlab('Months') +
        ylab('Transaction Costs') +
-       ggtitle(paste('Vasicek based transaction costs, R = ', alpha))
+       ggtitle(paste('Vasicek transaction costs, R = ', alphanum))
      ggsave(paste('vis/vasicek',alpha,'.pdf', sep = ''))
     
      ggplot(data = new_df, aes(x = idx)) +
@@ -115,7 +114,7 @@ for(fil in files){
        guides(color=guide_legend(title=NULL)) +
        xlab('Months') +
        ylab('Transaction Costs') +
-       ggtitle(paste('Data based transaction costs, R = ', alpha))
+       ggtitle(paste('Data transaction costs, R = ', alphanum))
      ggsave(paste('vis/data',alpha,'.pdf', sep = ''))
     }
     
@@ -203,3 +202,4 @@ ggplot(data = agg_dfkrd, aes(x = alphanum, y = x, color = type)) +
                                   expression(paste('Vasicek, ', gamma == sqrt(R), sep = ''))))
 
 ggsave('vis/TransactioncostsAlphaKRD.pdf')
+
