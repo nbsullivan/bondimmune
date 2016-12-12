@@ -168,25 +168,110 @@ dataaggkrd$alphanum <-  as.numeric(substr(dataaggkrd$Alpha, nchar(dataaggkrd$Alp
 
 agg_dfmatch <- rbind(vasicekaggmatch,dataaggmatch)
 
+# breaking down into components
+# gamma = R
+aggmatchVR <- subset(agg_dfmatch, type == 'VasicekAlpha')
+aggmatchDR <- subset(agg_dfmatch, type == 'DataAlpha')
+aggmatchR <- rbind(aggmatchVR, aggmatchDR)
+
+# gamma = R^2
+aggmatchVR2 <- subset(agg_dfmatch, type == 'Vasicekpow2Gamma_Alpha')
+aggmatchDR2 <- subset(agg_dfmatch, type == 'Datapow2Gamma_Alpha')
+aggmatchR2 <- rbind(aggmatchVR2, aggmatchDR2)
+
+# gamma = sqrt(R)
+aggmatchVsqrtR <- subset(agg_dfmatch, type == 'VasiceksqrtGamma_Alpha')
+aggmatchDsqrtR <- subset(agg_dfmatch, type == 'DatasqrtGamma_Alpha')
+aggmatchRsqrtR <- rbind(aggmatchVsqrtR, aggmatchDsqrtR)
 
 
-ggplot(data = agg_dfmatch, aes(x = alphanum, y = x, color = type)) +
+ggplot(data = aggmatchR, aes(x = alphanum, y = x, color = type)) +
   geom_line() +
   xlab('R level') +
   ylab('Total transaction costs') +
-  ggtitle('Transaction costs of Duration Matching') +
+  ggtitle( expression(paste('Transaction costs Duration Matching ',gamma == R), sep ='')) +
   guides(color=guide_legend(title=NULL)) +
-  scale_color_discrete(labels = c(expression(paste('Data, ', gamma == R, sep = '')), 
-                                  expression(paste('Data, ', gamma == R^2, sep = '')),
-                                  expression(paste('Data, ', gamma == sqrt(R), sep = '')),
-                                  expression(paste('Vasicek, ', gamma == R, sep = '')),
-                                  expression(paste('Vasicek, ', gamma == R^2, sep = '')),
-                                  expression(paste('Vasicek, ', gamma == sqrt(R), sep = ''))))
-  
+  scale_color_discrete(labels = c('Data', 'Vasicek'))
 
-ggsave('vis/TransactioncostsAlphaMatching.pdf')
+ggsave('vis/TransactioncostsRMatching.pdf')    
+
+ggplot(data = aggmatchR2, aes(x = alphanum, y = x, color = type)) +
+  geom_line() +
+  xlab('R level') +
+  ylab('Total transaction costs') +
+  ggtitle( expression(paste('Transaction costs Duration Matching ',gamma == R^2), sep ='')) +
+  guides(color=guide_legend(title=NULL)) +
+  scale_color_discrete(labels = c('Data', 'Vasicek'))
+
+ggsave('vis/TransactioncostsR2Matching.pdf')   
+    
+
+ggplot(data = aggmatchRsqrtR, aes(x = alphanum, y = x, color = type)) +
+  geom_line() +
+  xlab('R level') +
+  ylab('Total transaction costs') +
+  ggtitle( expression(paste('Transaction costs Duration Matching ',gamma == sqrt(R)), sep ='')) +
+  guides(color=guide_legend(title=NULL)) +
+  scale_color_discrete(labels = c('Data', 'Vasicek'))
+
+ggsave('vis/TransactioncostssqrtRMatching.pdf')   
+
+    
+
+
+
 
 agg_dfkrd <- rbind(vasicekaggkrd,dataaggkrd)
+
+# breaking down into components
+# gamma = R
+aggkrdVR <- subset(agg_dfmatch, type == 'VasicekAlpha')
+aggkrdDR <- subset(agg_dfmatch, type == 'DataAlpha')
+aggkrdR <- rbind(aggmatchVR, aggmatchDR)
+
+# gamma = R^2
+aggkrdVR2 <- subset(agg_dfkrd, type == 'Vasicekpow2Gamma_Alpha')
+aggkrdDR2 <- subset(agg_dfkrd, type == 'Datapow2Gamma_Alpha')
+aggkrdR2 <- rbind(aggkrdVR2, aggkrdDR2)
+
+# gamma = sqrt(R)
+aggkrdVsqrtR <- subset(agg_dfkrd, type == 'VasiceksqrtGamma_Alpha')
+aggkrdDsqrtR <- subset(agg_dfkrd, type == 'DatasqrtGamma_Alpha')
+aggkrdRsqrtR <- rbind(aggkrdVsqrtR, aggkrdDsqrtR)
+
+
+ggplot(data = aggkrdR, aes(x = alphanum, y = x, color = type)) +
+  geom_line() +
+  xlab('R level') +
+  ylab('Total transaction costs') +
+  ggtitle( expression(paste('Transaction costs KRD ',gamma == R), sep ='')) +
+  guides(color=guide_legend(title=NULL)) +
+  scale_color_discrete(labels = c('Data', 'Vasicek'))
+
+ggsave('vis/TransactioncostsRkrd.pdf')    
+
+ggplot(data = aggkrdR2, aes(x = alphanum, y = x, color = type)) +
+  geom_line() +
+  xlab('R level') +
+  ylab('Total transaction costs') +
+  ggtitle( expression(paste('Transaction costs KRD ',gamma == R^2), sep ='')) +
+  guides(color=guide_legend(title=NULL)) +
+  scale_color_discrete(labels = c('Data', 'Vasicek'))
+
+ggsave('vis/TransactioncostsR2krd.pdf')   
+
+
+ggplot(data = aggkrdRsqrtR, aes(x = alphanum, y = x, color = type)) +
+  geom_line() +
+  xlab('R level') +
+  ylab('Total transaction costs') +
+  ggtitle( expression(paste('Transaction costs KRD ',gamma == sqrt(R)), sep ='')) +
+  guides(color=guide_legend(title=NULL)) +
+  scale_color_discrete(labels = c('Data', 'Vasicek'))
+
+ggsave('vis/TransactioncostssqrtRkrd.pdf')   
+
+
 
 ggplot(data = agg_dfkrd, aes(x = alphanum, y = x, color = type)) +
   geom_line() +
