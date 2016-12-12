@@ -225,9 +225,9 @@ agg_dfkrd <- rbind(vasicekaggkrd,dataaggkrd)
 
 # breaking down into components
 # gamma = R
-aggkrdVR <- subset(agg_dfmatch, type == 'VasicekAlpha')
-aggkrdDR <- subset(agg_dfmatch, type == 'DataAlpha')
-aggkrdR <- rbind(aggmatchVR, aggmatchDR)
+aggkrdVR <- subset(agg_dfkrd, type == 'VasicekAlpha')
+aggkrdDR <- subset(agg_dfkrd, type == 'DataAlpha')
+aggkrdR <- rbind(aggkrdVR, aggkrdDR)
 
 # gamma = R^2
 aggkrdVR2 <- subset(agg_dfkrd, type == 'Vasicekpow2Gamma_Alpha')
