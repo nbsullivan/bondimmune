@@ -134,7 +134,7 @@ for(fil in files){
        guides(linetype=guide_legend(title=NULL)) +
        xlab('Months') +
        ylab('Cumlative Transaction Costs') +
-       ggtitle(paste('Cumlative Data costs, R = ', alphanum))
+       ggtitle(paste('Cumulative Data costs, R = ', alphanum))
      
      ggsave(paste('visBW/cumBWdata',alpha,'.pdf', sep = ''))
      
@@ -144,7 +144,7 @@ for(fil in files){
        guides(linetype=guide_legend(title=NULL)) +
        xlab('Months') +
        ylab('Cumlative Transaction Costs') +
-       ggtitle(paste('Cumlative Vasicek costs, R = ', alphanum))
+       ggtitle(paste('Cumulative Vasicek costs, R = ', alphanum))
      
      ggsave(paste('visBW/cumBWvasicek',alpha,'.pdf', sep = ''))
      
