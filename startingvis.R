@@ -121,6 +121,33 @@ for(fil in files){
        ggtitle(paste('Data transaction costs, R = ', alphanum))
      
      ggsave(paste('visBW/BWdata',alpha,'.pdf', sep = ''))
+     
+     # cumlative sums.
+     new_df$cumdatabased <- cumsum(new_df$databased)
+     new_df$cumkrddata <- cumsum(new_df$krddata)
+     new_df$cumvasicekbased <- cumsum(new_df$vasicekbased)
+     new_df$cumkrdvasicek <- cumsum(new_df$krdvasicek)
+     
+     ggplot(data = new_df, aes(x = idx)) +
+       geom_line(aes(y = cumdatabased, linetype = "Duration Matching")) +
+       geom_line(aes(y = cumkrddata, linetype = "Key Rate Duration")) +
+       guides(linetype=guide_legend(title=NULL)) +
+       xlab('Months') +
+       ylab('Cumlative Transaction Costs') +
+       ggtitle(paste('Cumlative Data costs, R = ', alphanum))
+     
+     ggsave(paste('visBW/cumBWdata',alpha,'.pdf', sep = ''))
+     
+     ggplot(data = new_df, aes(x = idx)) +
+       geom_line(aes(y = cumvasicekbased, linetype = "Duration Matching")) +
+       geom_line(aes(y = cumkrdvasicek, linetype = "Key Rate Duration")) +
+       guides(linetype=guide_legend(title=NULL)) +
+       xlab('Months') +
+       ylab('Cumlative Transaction Costs') +
+       ggtitle(paste('Cumlative Vasicek costs, R = ', alphanum))
+     
+     ggsave(paste('visBW/cumBWvasicek',alpha,'.pdf', sep = ''))
+     
     }
     
   }
