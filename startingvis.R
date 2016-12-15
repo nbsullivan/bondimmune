@@ -325,3 +325,20 @@ ggplot(data = agg_dfkrd, aes(x = alphanum, y = x, linetype = type)) +
 
 ggsave('visBW/BWTransactioncostsAlphaKRD.pdf')
 
+
+ggplot(data = agg_dfmatch, aes(x = alphanum, y = x, linetype = type)) +
+  geom_line() +
+  xlab('R level') +
+  ylab('Total transaction costs') +
+  ggtitle('Transaction costs of KRD') +
+  guides(linetype=guide_legend(title=NULL)) +
+  scale_linetype_discrete(labels = c(expression(paste('Data, ', gamma == R, sep = '')), 
+                                     expression(paste('Data, ', gamma == R^2, sep = '')),
+                                     expression(paste('Data, ', gamma == sqrt(R), sep = '')),
+                                     expression(paste('Vasicek, ', gamma == R, sep = '')),
+                                     expression(paste('Vasicek, ', gamma == R^2, sep = '')),
+                                     expression(paste('Vasicek, ', gamma == sqrt(R), sep = ''))))
+
+
+ggsave('visBW/BWTransactioncostsAlphaMAtch.pdf')
+
