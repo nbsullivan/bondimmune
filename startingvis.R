@@ -22,7 +22,7 @@ cleaned_df <- rename(cleaned_df, newCnames)
 # melted data for facet plotting
 clean_rshp <- melt(cleaned_df, id = c ('daynumber', 'date'))
 
-theme_set(theme_gray(base_size = 22))
+theme_set(theme_bw(base_size = 22))
 
 reduced_df <- subset(trimmed_df, date > as.Date("2006-03-01") & date < as.Date("2016-02-29"))
 ggplot(data = reduced_df, aes(x = date, y = year1)) +
@@ -30,6 +30,7 @@ ggplot(data = reduced_df, aes(x = date, y = year1)) +
   xlab('Date') +
   ylab('Interest Rate') +
   ggtitle('Interest Rates of 1 year bonds')
+
 
 ggsave('vis/1yearbondrates.pdf')
 
@@ -49,6 +50,7 @@ ggplot(data = ag_df, aes(x = maturities, y = rates)) +
   xlab('Maturity (Months)') +
   ggtitle('Yield curve for 7/29/2016')
 
+
 ggsave('vis/ag_yield_curve.pdf')
 
 
@@ -59,6 +61,7 @@ ggplot(data = ag_df, aes(x = bondtype, y = rates)) +
                    limits=c('1', '3', '6', '12','24','36','60','84','120','240','360' )) +
   ylab('Interest Rate (%)') +
   ggtitle('Yield curve for 7/29/2016')
+
 
 ggsave('vis/ag_yield_curve_alt.pdf')
 
@@ -100,22 +103,24 @@ for(fil in files){
       print("ploting and saving")
       # plot transaction costs.
       ggplot(data = new_df, aes(x = idx)) +
-       geom_line(aes(y = vasicekbased, color = "Duration Matching")) +
-       geom_line(aes(y = krdvasicek, color = "Key Rate Duration")) +
-        guides(color=guide_legend(title=NULL)) +
+       geom_line(aes(y = vasicekbased, linetype = "Duration Matching")) +
+       geom_line(aes(y = krdvasicek, linetype = "Key Rate Duration")) +
+       guides(linetype=guide_legend(title=NULL)) +
        xlab('Months') +
        ylab('Transaction Costs') +
        ggtitle(paste('Vasicek transaction costs, R = ', alphanum))
-     ggsave(paste('vis/vasicek',alpha,'.pdf', sep = ''))
+      
+     ggsave(paste('visBW/BWvasicek',alpha,'.pdf', sep = ''))
     
      ggplot(data = new_df, aes(x = idx)) +
-       geom_line(aes(y = databased, color = "Duration Matching")) +
-       geom_line(aes(y = krddata, color = "Key Rate Duration")) +
-       guides(color=guide_legend(title=NULL)) +
+       geom_line(aes(y = databased, linetype = "Duration Matching")) +
+       geom_line(aes(y = krddata, linetype = "Key Rate Duration")) +
+       guides(linetype=guide_legend(title=NULL)) +
        xlab('Months') +
        ylab('Transaction Costs') +
        ggtitle(paste('Data transaction costs, R = ', alphanum))
-     ggsave(paste('vis/data',alpha,'.pdf', sep = ''))
+     
+     ggsave(paste('visBW/BWdata',alpha,'.pdf', sep = ''))
     }
     
   }
@@ -136,14 +141,15 @@ for(fil in files){
 # vasicek performance.
 
 rates_df <-subset(rates_df, ratetype == 'Data' | ratetype == 'Vasicek')
-ggplot(data = rates_df, aes(x = idx, y = rate, color = ratetype)) +
+ggplot(data = rates_df, aes(x = idx, y = rate, linetype = ratetype)) +
   geom_line() +
   ylab('Interest Rate') +
   xlab('Months') +
   ggtitle('Vasicek interest rate model on 5 year bonds') +
-  guides(color=guide_legend(title=NULL))
+  guides(linetype=guide_legend(title=NULL))
 
-ggsave('vis/Vasicekperformance.pdf')
+
+ggsave('visBW/BWVasicekperformance.pdf')
 
 # total transaction costs as function of alpha.
 vasicekaggmatch <- aggregate(full_df$vasicekbased, by=list(Alpha=full_df$alpha), FUN=sum)
@@ -185,36 +191,38 @@ aggmatchDsqrtR <- subset(agg_dfmatch, type == 'DatasqrtGamma_Alpha')
 aggmatchRsqrtR <- rbind(aggmatchVsqrtR, aggmatchDsqrtR)
 
 
-ggplot(data = aggmatchR, aes(x = alphanum, y = x, color = type)) +
+ggplot(data = aggmatchR, aes(x = alphanum, y = x, linetype = type)) +
   geom_line() +
   xlab('R level') +
   ylab('Total transaction costs') +
   ggtitle( expression(paste('Transaction costs Duration Matching ',gamma == R), sep ='')) +
-  guides(color=guide_legend(title=NULL)) +
-  scale_color_discrete(labels = c('Data', 'Vasicek'))
+  guides(linetype=guide_legend(title=NULL)) +
+  scale_linetype_discrete(labels = c('Data', 'Vasicek'))
 
-ggsave('vis/TransactioncostsRMatching.pdf')    
 
-ggplot(data = aggmatchR2, aes(x = alphanum, y = x, color = type)) +
+ggsave('visBW/BWTransactioncostsRMatching.pdf')    
+
+ggplot(data = aggmatchR2, aes(x = alphanum, y = x, linetype = type)) +
   geom_line() +
   xlab('R level') +
   ylab('Total transaction costs') +
   ggtitle( expression(paste('Transaction costs Duration Matching ',gamma == R^2), sep ='')) +
-  guides(color=guide_legend(title=NULL)) +
-  scale_color_discrete(labels = c('Data', 'Vasicek'))
+  guides(linetype=guide_legend(title=NULL)) +
+  scale_linetype_discrete(labels = c('Data', 'Vasicek'))
 
-ggsave('vis/TransactioncostsR2Matching.pdf')   
+ggsave('visBW/BWTransactioncostsR2Matching.pdf')   
     
 
-ggplot(data = aggmatchRsqrtR, aes(x = alphanum, y = x, color = type)) +
+ggplot(data = aggmatchRsqrtR, aes(x = alphanum, y = x, linetype = type)) +
   geom_line() +
   xlab('R level') +
   ylab('Total transaction costs') +
   ggtitle( expression(paste('Transaction costs Duration Matching ',gamma == sqrt(R)), sep ='')) +
-  guides(color=guide_legend(title=NULL)) +
-  scale_color_discrete(labels = c('Data', 'Vasicek'))
+  guides(linetype=guide_legend(title=NULL)) +
+  scale_linetype_discrete(labels = c('Data', 'Vasicek'))
 
-ggsave('vis/TransactioncostssqrtRMatching.pdf')   
+
+ggsave('visBW/BWTransactioncostssqrtRMatching.pdf')   
 
     
 
@@ -240,51 +248,53 @@ aggkrdDsqrtR <- subset(agg_dfkrd, type == 'DatasqrtGamma_Alpha')
 aggkrdRsqrtR <- rbind(aggkrdVsqrtR, aggkrdDsqrtR)
 
 
-ggplot(data = aggkrdR, aes(x = alphanum, y = x, color = type)) +
+ggplot(data = aggkrdR, aes(x = alphanum, y = x, linetype = type)) +
   geom_line() +
   xlab('R level') +
   ylab('Total transaction costs') +
   ggtitle( expression(paste('Transaction costs KRD ',gamma == R), sep ='')) +
-  guides(color=guide_legend(title=NULL)) +
-  scale_color_discrete(labels = c('Data', 'Vasicek'))
+  guides(linetype=guide_legend(title=NULL)) +
+  scale_linetype_discrete(labels = c('Data', 'Vasicek'))
 
-ggsave('vis/TransactioncostsRkrd.pdf')    
+ggsave('visBW/BWTransactioncostsRkrd.pdf')    
 
-ggplot(data = aggkrdR2, aes(x = alphanum, y = x, color = type)) +
+ggplot(data = aggkrdR2, aes(x = alphanum, y = x, linetype = type)) +
   geom_line() +
   xlab('R level') +
   ylab('Total transaction costs') +
   ggtitle( expression(paste('Transaction costs KRD ',gamma == R^2), sep ='')) +
-  guides(color=guide_legend(title=NULL)) +
-  scale_color_discrete(labels = c('Data', 'Vasicek'))
+  guides(linetype=guide_legend(title=NULL)) +
+  scale_linetype_discrete(labels = c('Data', 'Vasicek'))
 
-ggsave('vis/TransactioncostsR2krd.pdf')   
+ggsave('visBW/BWTransactioncostsR2krd.pdf')   
 
 
-ggplot(data = aggkrdRsqrtR, aes(x = alphanum, y = x, color = type)) +
+ggplot(data = aggkrdRsqrtR, aes(x = alphanum, y = x, linetype = type)) +
   geom_line() +
   xlab('R level') +
   ylab('Total transaction costs') +
   ggtitle( expression(paste('Transaction costs KRD ',gamma == sqrt(R)), sep ='')) +
-  guides(color=guide_legend(title=NULL)) +
-  scale_color_discrete(labels = c('Data', 'Vasicek'))
-
-ggsave('vis/TransactioncostssqrtRkrd.pdf')   
+  guides(linetype=guide_legend(title=NULL)) +
+  scale_linetype_discrete(labels = c('Data', 'Vasicek'))
 
 
+ggsave('visBW/BWTransactioncostssqrtRkrd.pdf')   
 
-ggplot(data = agg_dfkrd, aes(x = alphanum, y = x, color = type)) +
+
+
+ggplot(data = agg_dfkrd, aes(x = alphanum, y = x, linetype = type)) +
   geom_line() +
   xlab('R level') +
   ylab('Total transaction costs') +
   ggtitle('Transaction costs of KRD') +
-  guides(color=guide_legend(title=NULL)) +
-  scale_color_discrete(labels = c(expression(paste('Data, ', gamma == R, sep = '')), 
+  guides(linetype=guide_legend(title=NULL)) +
+  scale_linetype_discrete(labels = c(expression(paste('Data, ', gamma == R, sep = '')), 
                                   expression(paste('Data, ', gamma == R^2, sep = '')),
                                   expression(paste('Data, ', gamma == sqrt(R), sep = '')),
                                   expression(paste('Vasicek, ', gamma == R, sep = '')),
                                   expression(paste('Vasicek, ', gamma == R^2, sep = '')),
                                   expression(paste('Vasicek, ', gamma == sqrt(R), sep = ''))))
 
-ggsave('vis/TransactioncostsAlphaKRD.pdf')
+
+ggsave('visBW/BWTransactioncostsAlphaKRD.pdf')
 
