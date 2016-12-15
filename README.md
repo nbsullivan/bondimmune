@@ -5,6 +5,8 @@ Nicholas Sullivan, Anthony Gusman and Nathan Johnson.
 Requirements: python 2.7, pandas, scipy, numpy.
 
 
+Notes: In the code risk tolerance is refered to as alpha, this alpha is the risk tolerance not the transactional cost as mentioned in the paper.
+
 To Run:
 run the script bond_project.py that will generate the data csvs
 
