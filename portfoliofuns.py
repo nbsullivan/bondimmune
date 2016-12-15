@@ -7,6 +7,7 @@ from math import isnan
 from pprint import pprint as pp
 
 """
+	OUT DATED!!!
 	portfolio_list structure:
 
 	A list of position dictionary
